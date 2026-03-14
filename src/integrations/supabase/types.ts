@@ -14,13 +14,152 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      generations: {
+        Row: {
+          copies: Json
+          created_at: string
+          id: string
+          is_favorite: boolean
+          objective: string | null
+          platform: string
+          product_description: string | null
+          product_name: string
+          target_audience: string | null
+          tone: string | null
+          user_id: string
+        }
+        Insert: {
+          copies?: Json
+          created_at?: string
+          id?: string
+          is_favorite?: boolean
+          objective?: string | null
+          platform: string
+          product_description?: string | null
+          product_name: string
+          target_audience?: string | null
+          tone?: string | null
+          user_id: string
+        }
+        Update: {
+          copies?: Json
+          created_at?: string
+          id?: string
+          is_favorite?: boolean
+          objective?: string | null
+          platform?: string
+          product_description?: string | null
+          product_name?: string
+          target_audience?: string | null
+          tone?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          generations_limit: number
+          generations_used: number
+          id: string
+          name: string | null
+          plan: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          generations_limit?: number
+          generations_used?: number
+          id: string
+          name?: string | null
+          plan?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          generations_limit?: number
+          generations_used?: number
+          id?: string
+          name?: string | null
+          plan?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+        }
+        Relationships: []
+      }
+      saved_copies: {
+        Row: {
+          copy_text: string
+          created_at: string
+          generation_id: string | null
+          id: string
+          label: string | null
+          platform: string | null
+          user_id: string
+        }
+        Insert: {
+          copy_text: string
+          created_at?: string
+          generation_id?: string | null
+          id?: string
+          label?: string | null
+          platform?: string | null
+          user_id: string
+        }
+        Update: {
+          copy_text?: string
+          created_at?: string
+          generation_id?: string | null
+          id?: string
+          label?: string | null
+          platform?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_copies_generation_id_fkey"
+            columns: ["generation_id"]
+            isOneToOne: false
+            referencedRelation: "generations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      usage_logs: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          platform: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          platform?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          platform?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      increment_generations_used: {
+        Args: { user_uuid: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

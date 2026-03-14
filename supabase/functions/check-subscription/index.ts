@@ -60,9 +60,19 @@ serve(async (req) => {
         })
         .eq("id", userData.user.id);
 
+      let subscriptionEnd = null;
+      try {
+        const endTimestamp = typeof subscription.current_period_end === 'number' 
+          ? subscription.current_period_end * 1000 
+          : Date.parse(String(subscription.current_period_end));
+        if (!isNaN(endTimestamp)) {
+          subscriptionEnd = new Date(endTimestamp).toISOString();
+        }
+      } catch { /* ignore */ }
+
       return new Response(JSON.stringify({
         subscribed: true,
-        subscription_end: new Date(subscription.current_period_end * 1000).toISOString(),
+        subscription_end: subscriptionEnd,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

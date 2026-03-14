@@ -3,6 +3,8 @@ import { Copy, Check, Heart, RefreshCw } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface CopyVariation {
   id: number;
@@ -16,6 +18,7 @@ interface CopyVariation {
 interface CopyResultsProps {
   copies: CopyVariation[];
   platform: string;
+  generationId?: string | null;
   onRegenerate: () => void;
 }
 
@@ -36,15 +39,50 @@ function TypewriterText({ text, delay = 0 }: { text: string; delay?: number }) {
   );
 }
 
-function CopyCard({ copy, index }: { copy: CopyVariation; index: number }) {
+function CopyCard({ copy, index, platform, generationId }: { copy: CopyVariation; index: number; platform: string; generationId?: string | null }) {
   const [copied, setCopied] = useState(false);
   const [favorited, setFavorited] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const { user } = useAuth();
 
   const handleCopy = () => {
     navigator.clipboard.writeText(`${copy.titulo}\n${copy.texto}\n${copy.cta}`);
     setCopied(true);
     toast.success("Copiado para a área de transferência!");
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleFavorite = async () => {
+    if (!user) return;
+    setSaving(true);
+    try {
+      if (favorited) {
+        setFavorited(false);
+        toast.success("Removido dos salvos");
+      } else {
+        const { error } = await supabase.from("saved_copies").insert({
+          user_id: user.id,
+          generation_id: generationId || null,
+          copy_text: `${copy.titulo}\n${copy.texto}\nCTA: ${copy.cta}`,
+          platform,
+          label: copy.titulo,
+        });
+        if (error) throw error;
+
+        await supabase.from("usage_logs").insert({
+          user_id: user.id,
+          action: "save_copy",
+          platform,
+        });
+
+        setFavorited(true);
+        toast.success("Salvo com sucesso!");
+      }
+    } catch (e) {
+      toast.error("Erro ao salvar copy.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const charLimit = 125;
@@ -69,10 +107,8 @@ function CopyCard({ copy, index }: { copy: CopyVariation; index: number }) {
             {copy.contagem_chars}/{charLimit} chars
           </span>
           <button
-            onClick={() => {
-              setFavorited(!favorited);
-              toast.success(favorited ? "Removido dos salvos" : "Salvo com sucesso!");
-            }}
+            onClick={handleFavorite}
+            disabled={saving}
             className="p-1.5 rounded-md hover:bg-muted transition-colors duration-150"
           >
             <Heart
@@ -119,7 +155,7 @@ const platformLabels: Record<string, string> = {
   email: "E-mail Marketing",
 };
 
-export function CopyResults({ copies, platform, onRegenerate }: CopyResultsProps) {
+export function CopyResults({ copies, platform, generationId, onRegenerate }: CopyResultsProps) {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
@@ -141,17 +177,8 @@ export function CopyResults({ copies, platform, onRegenerate }: CopyResultsProps
 
       <div className="space-y-4">
         {copies.map((copy, i) => (
-          <CopyCard key={copy.id} copy={copy} index={i} />
+          <CopyCard key={copy.id} copy={copy} index={i} platform={platform} generationId={generationId} />
         ))}
-      </div>
-
-      <div className="flex gap-3 mt-6">
-        <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold transition-all duration-150">
-          Salvar selecionados
-        </Button>
-        <Button variant="outline" className="text-foreground">
-          Exportar tudo
-        </Button>
       </div>
     </div>
   );

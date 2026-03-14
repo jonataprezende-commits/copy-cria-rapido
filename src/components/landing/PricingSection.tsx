@@ -15,9 +15,9 @@ const plans = [
       { text: "5 gerações por mês", included: true },
       { text: "Meta Ads e Google Ads", included: true },
       { text: "3 variações por geração", included: true },
+      { text: "2 análises por mês", included: true },
       { text: "Histórico salvo", included: false },
       { text: "Exportação", included: false },
-      { text: "Marca d'água no copy", included: true },
     ],
   },
   {
@@ -32,9 +32,26 @@ const plans = [
       { text: "Gerações ilimitadas", included: true },
       { text: "Todas as plataformas", included: true },
       { text: "10 variações por geração", included: true },
-      { text: "Histórico completo", included: true },
-      { text: "Exportar TXT, CSV, DOCX", included: true },
-      { text: "Modo Campanha Completa", included: true },
+      { text: "Campanha 50 anúncios", included: true },
+      { text: "Análises e reescritas ilimitadas", included: true },
+      { text: "Coach de copy + XP", included: true },
+    ],
+  },
+  {
+    name: "Agência",
+    price: "R$97",
+    period: "/mês",
+    description: "Para profissionais",
+    cta: "Assinar Agência",
+    highlighted: false,
+    badge: "Para profissionais",
+    features: [
+      { text: "Tudo do Pro", included: true },
+      { text: "Funil completo em 1 clique", included: true },
+      { text: "Relatório PDF mensal", included: true },
+      { text: "Prioridade na fila da IA", included: true },
+      { text: "Landing page + e-mails + script", included: true },
+      { text: "Suporte prioritário", included: true },
     ],
   },
 ];
@@ -44,14 +61,14 @@ export function PricingSection() {
 
   return (
     <section className="py-20 px-4" id="precos">
-      <div className="max-w-4xl mx-auto text-center">
+      <div className="max-w-5xl mx-auto text-center">
         <h2 className="text-h1 text-foreground mb-4 text-balance">
           Preços simples, sem surpresas
         </h2>
         <p className="text-muted-foreground text-lg mb-12">
           Comece grátis. Faça upgrade quando precisar.
         </p>
-        <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
           {plans.map((plan, i) => (
             <motion.div
               key={plan.name}
@@ -66,7 +83,11 @@ export function PricingSection() {
               }`}
             >
               {plan.badge && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 rounded-full">
+                <span className={`absolute -top-3 left-1/2 -translate-x-1/2 text-xs font-semibold px-3 py-1 rounded-full ${
+                  plan.highlighted
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-accent text-accent-foreground"
+                }`}>
                   {plan.badge}
                 </span>
               )}

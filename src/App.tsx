@@ -12,6 +12,11 @@ import Historico from "./pages/Historico.tsx";
 import Salvos from "./pages/Salvos.tsx";
 import Exportar from "./pages/Exportar.tsx";
 import Configuracoes from "./pages/Configuracoes.tsx";
+import Analisar from "./pages/Analisar.tsx";
+import Reescrever from "./pages/Reescrever.tsx";
+import Campanha from "./pages/Campanha.tsx";
+import Treinar from "./pages/Treinar.tsx";
+import Funil from "./pages/Funil.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -31,6 +36,11 @@ const App = () => (
             <Route path="/salvos" element={<ProtectedRoute><Salvos /></ProtectedRoute>} />
             <Route path="/exportar" element={<ProtectedRoute><Exportar /></ProtectedRoute>} />
             <Route path="/configuracoes" element={<ProtectedRoute><Configuracoes /></ProtectedRoute>} />
+            <Route path="/analisar" element={<ProtectedRoute><Analisar /></ProtectedRoute>} />
+            <Route path="/reescrever" element={<ProtectedRoute><Reescrever /></ProtectedRoute>} />
+            <Route path="/campanha" element={<ProtectedRoute><Campanha /></ProtectedRoute>} />
+            <Route path="/treinar" element={<ProtectedRoute><Treinar /></ProtectedRoute>} />
+            <Route path="/funil" element={<ProtectedRoute><Funil /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

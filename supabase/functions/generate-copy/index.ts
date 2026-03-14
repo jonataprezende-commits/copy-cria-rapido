@@ -27,52 +27,46 @@ serve(async (req) => {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Não autorizado" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      { auth: { persistSession: false } }
-    );
-
+    const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabase.auth.getUser(token);
     if (userError || !userData.user) {
       return new Response(JSON.stringify({ error: "Usuário não autenticado" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const userId = userData.user.id;
-
-    // Check plan limits
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .single();
-
+    const { data: profile, error: profileError } = await supabase.from("profiles").select("*").eq("id", userId).single();
     if (profileError || !profile) {
       return new Response(JSON.stringify({ error: "Perfil não encontrado" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const isPro = profile.plan === "pro";
+    const isPro = profile.plan === "pro" || profile.plan === "agency";
     if (!isPro && profile.generations_used >= profile.generations_limit) {
       return new Response(JSON.stringify({ error: "limit_reached", message: "Você atingiu o limite de gerações gratuitas deste mês." }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const { productName, description, audience, platform, tone, objective } = await req.json();
+    const { productName, description, audience, platform, tone, objective, businessType, triggers } = await req.json();
     const numVariations = isPro ? 10 : 3;
+
+    let triggersInstruction = "";
+    if (triggers && triggers.length > 0) {
+      triggersInstruction = `\nGatilhos mentais obrigatórios: ${triggers.join(", ")}. Use de forma natural no copy.`;
+    }
+
+    let businessInstruction = "";
+    if (businessType) {
+      businessInstruction = `\nEste copy é para um negócio do tipo: ${businessType}. Adapte os gatilhos, vocabulário e estrutura para este nicho.`;
+    }
 
     const systemPrompt = `Você é o melhor copywriter de anúncios do Brasil.
 Escreva SEMPRE em português brasileiro (pt-BR).
@@ -80,13 +74,14 @@ Gere ${numVariations} variações de copy para ${platform}.
 Regras da plataforma ${platform}:
 ${platformGuides[platform] || "Copy persuasivo e direto."}
 Tom desejado: ${tone}
-Objetivo: ${objective}
+Objetivo: ${objective}${businessInstruction}${triggersInstruction}
 Para cada variação entregue:
 - titulo
 - texto
 - cta (call to action)
 - contagem_chars (contagem total de caracteres do titulo + texto + cta)
 - por_que_funciona (1 frase explicando por que esse copy funciona)
+${triggers && triggers.length > 0 ? "- gatilhos_usados (array com os nomes dos gatilhos usados nesta variação)" : ""}
 Seja direto, persuasivo, use gatilhos mentais naturalmente.
 Escreva como brasileiro — sem português de Portugal.
 Use gírias e expressões brasileiras quando o tom for descontraído.`;
@@ -134,6 +129,7 @@ Gere ${numVariations} variações de copy.`;
                         cta: { type: "string" },
                         contagem_chars: { type: "number" },
                         por_que_funciona: { type: "string" },
+                        gatilhos_usados: { type: "array", items: { type: "string" } },
                       },
                       required: ["id", "titulo", "texto", "cta", "contagem_chars", "por_que_funciona"],
                       additionalProperties: false,
@@ -155,14 +151,7 @@ Gere ${numVariations} variações de copy.`;
       console.error("[GENERATE-COPY] AI gateway error:", aiResponse.status, errText);
       if (aiResponse.status === 429) {
         return new Response(JSON.stringify({ error: "Limite de requisições atingido. Tente novamente em alguns instantes." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (aiResponse.status === 402) {
-        return new Response(JSON.stringify({ error: "Créditos de IA esgotados." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       throw new Error(`AI error: ${aiResponse.status}`);
@@ -174,50 +163,26 @@ Gere ${numVariations} variações de copy.`;
 
     const copies = JSON.parse(toolCall.function.arguments);
 
-    // Save generation to DB
-    const { data: generation, error: genError } = await supabase
-      .from("generations")
-      .insert({
-        user_id: userId,
-        product_name: productName,
-        product_description: description,
-        target_audience: audience,
-        platform,
-        tone,
-        objective,
-        copies: copies.copies,
-      })
-      .select()
-      .single();
+    const { data: generation, error: genError } = await supabase.from("generations").insert({
+      user_id: userId, product_name: productName, product_description: description,
+      target_audience: audience, platform, tone, objective, copies: copies.copies,
+    }).select().single();
 
-    if (genError) {
-      console.error("[GENERATE-COPY] DB insert error:", genError);
-    }
+    if (genError) console.error("[GENERATE-COPY] DB insert error:", genError);
 
-    // Increment usage
     await supabase.rpc("increment_generations_used", { user_uuid: userId });
-
-    // Log usage
-    await supabase.from("usage_logs").insert({
-      user_id: userId,
-      action: "generate",
-      platform,
-    });
+    await supabase.from("usage_logs").insert({ user_id: userId, action: "generate", platform });
 
     console.log("[GENERATE-COPY] Success for user", userId);
 
-    return new Response(JSON.stringify({
-      copies: copies.copies,
-      generation_id: generation?.id,
-    }), {
+    return new Response(JSON.stringify({ copies: copies.copies, generation_id: generation?.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
     console.error("[GENERATE-COPY] Error:", error);
     const msg = error instanceof Error ? error.message : "Erro desconhecido";
     return new Response(JSON.stringify({ error: msg }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });

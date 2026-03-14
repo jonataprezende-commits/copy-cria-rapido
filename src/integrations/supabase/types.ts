@@ -14,6 +14,87 @@ export type Database = {
   }
   public: {
     Tables: {
+      analyses: {
+        Row: {
+          breakdown: Json | null
+          created_at: string
+          id: string
+          improved_copy: Json | null
+          negatives: string[] | null
+          original_copy: string
+          platform: string | null
+          positives: string[] | null
+          score: number | null
+          user_id: string
+        }
+        Insert: {
+          breakdown?: Json | null
+          created_at?: string
+          id?: string
+          improved_copy?: Json | null
+          negatives?: string[] | null
+          original_copy: string
+          platform?: string | null
+          positives?: string[] | null
+          score?: number | null
+          user_id: string
+        }
+        Update: {
+          breakdown?: Json | null
+          created_at?: string
+          id?: string
+          improved_copy?: Json | null
+          negatives?: string[] | null
+          original_copy?: string
+          platform?: string | null
+          positives?: string[] | null
+          score?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      coach_sessions: {
+        Row: {
+          body: string | null
+          created_at: string
+          cta: string | null
+          feedbacks: Json | null
+          final_score: number | null
+          headline: string | null
+          id: string
+          platform: string | null
+          scores: Json | null
+          user_id: string
+          xp_earned: number | null
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          cta?: string | null
+          feedbacks?: Json | null
+          final_score?: number | null
+          headline?: string | null
+          id?: string
+          platform?: string | null
+          scores?: Json | null
+          user_id: string
+          xp_earned?: number | null
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          cta?: string | null
+          feedbacks?: Json | null
+          final_score?: number | null
+          headline?: string | null
+          id?: string
+          platform?: string | null
+          scores?: Json | null
+          user_id?: string
+          xp_earned?: number | null
+        }
+        Relationships: []
+      }
       generations: {
         Row: {
           copies: Json
@@ -58,34 +139,61 @@ export type Database = {
       }
       profiles: {
         Row: {
+          analyses_limit: number | null
+          analyses_used: number | null
+          coach_sessions_limit: number | null
+          coach_sessions_used: number | null
           created_at: string
           generations_limit: number
           generations_used: number
           id: string
           name: string | null
           plan: string
+          preferred_template: string | null
+          rewrites_limit: number | null
+          rewrites_used: number | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
+          xp: number | null
+          xp_level: string | null
         }
         Insert: {
+          analyses_limit?: number | null
+          analyses_used?: number | null
+          coach_sessions_limit?: number | null
+          coach_sessions_used?: number | null
           created_at?: string
           generations_limit?: number
           generations_used?: number
           id: string
           name?: string | null
           plan?: string
+          preferred_template?: string | null
+          rewrites_limit?: number | null
+          rewrites_used?: number | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
+          xp?: number | null
+          xp_level?: string | null
         }
         Update: {
+          analyses_limit?: number | null
+          analyses_used?: number | null
+          coach_sessions_limit?: number | null
+          coach_sessions_used?: number | null
           created_at?: string
           generations_limit?: number
           generations_used?: number
           id?: string
           name?: string | null
           plan?: string
+          preferred_template?: string | null
+          rewrites_limit?: number | null
+          rewrites_used?: number | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
+          xp?: number | null
+          xp_level?: string | null
         }
         Relationships: []
       }

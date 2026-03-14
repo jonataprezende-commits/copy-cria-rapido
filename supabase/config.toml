@@ -11,3 +11,18 @@ verify_jwt = false
 
 [functions.customer-portal]
 verify_jwt = false
+
+[functions.analyze-copy]
+verify_jwt = false
+
+[functions.rewrite-copy]
+verify_jwt = false
+
+[functions.generate-campaign]
+verify_jwt = false
+
+[functions.coach-copy]
+verify_jwt = false
+
+[functions.generate-funnel]
+verify_jwt = false

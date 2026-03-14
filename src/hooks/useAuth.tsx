@@ -10,6 +10,15 @@ interface Profile {
   generations_limit: number;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
+  preferred_template?: string;
+  xp?: number;
+  xp_level?: string;
+  analyses_used?: number;
+  analyses_limit?: number;
+  rewrites_used?: number;
+  rewrites_limit?: number;
+  coach_sessions_used?: number;
+  coach_sessions_limit?: number;
 }
 
 interface AuthContextType {
@@ -41,8 +50,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .eq("id", userId)
       .single();
     if (!error && data) {
-      setProfile(data);
-      setIsSubscribed(data.plan === "pro");
+      setProfile(data as any);
+      setIsSubscribed(data.plan === "pro" || data.plan === "agency");
     }
   };
 
@@ -89,7 +98,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Auto-check subscription periodically
   useEffect(() => {
     if (!user) return;
     checkSubscription();

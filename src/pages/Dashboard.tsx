@@ -25,6 +25,7 @@ const Dashboard = () => {
   const [currentPlatform, setCurrentPlatform] = useState("meta");
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [lastFormData, setLastFormData] = useState<any>(null);
   const { profile, refreshProfile, checkSubscription } = useAuth();
   const [searchParams] = useSearchParams();
 
@@ -42,9 +43,11 @@ const Dashboard = () => {
     platform: string;
     tone: string;
     objective: string;
+    businessType?: string;
+    triggers?: string[];
   }) => {
-    // Check limits locally first
-    if (profile && profile.plan !== "pro" && profile.generations_used >= profile.generations_limit) {
+    const isPro = profile?.plan === "pro" || profile?.plan === "agency";
+    if (profile && !isPro && profile.generations_used >= profile.generations_limit) {
       setShowUpgrade(true);
       return;
     }
@@ -52,6 +55,7 @@ const Dashboard = () => {
     setIsLoading(true);
     setResults(null);
     setCurrentPlatform(data.platform);
+    setLastFormData(data);
 
     try {
       const { data: result, error } = await supabase.functions.invoke("generate-copy", {
@@ -79,7 +83,7 @@ const Dashboard = () => {
     }
   };
 
-  const isPro = profile?.plan === "pro";
+  const isPro = profile?.plan === "pro" || profile?.plan === "agency";
   const used = profile?.generations_used ?? 0;
   const limit = profile?.generations_limit ?? 5;
   const usagePercent = isPro ? 0 : Math.min((used / limit) * 100, 100);
@@ -88,7 +92,6 @@ const Dashboard = () => {
     <div className="flex min-h-screen bg-background">
       <DashboardSidebar />
       <main className="flex-1 p-6 md:p-8 overflow-auto">
-        {/* Usage bar */}
         {!isPro && (
           <div className="mb-6 flex items-center gap-3">
             <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden max-w-xs">
@@ -118,14 +121,7 @@ const Dashboard = () => {
                 copies={results}
                 platform={currentPlatform}
                 generationId={generationId}
-                onRegenerate={() => handleGenerate({
-                  productName: "",
-                  description: "",
-                  audience: "",
-                  platform: currentPlatform,
-                  tone: "",
-                  objective: "",
-                })}
+                onRegenerate={() => lastFormData && handleGenerate(lastFormData)}
               />
             )}
             {!results && !isLoading && (

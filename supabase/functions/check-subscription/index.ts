@@ -42,18 +42,24 @@ serve(async (req) => {
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: "active",
-      limit: 1,
+      limit: 5,
     });
 
     const hasActiveSub = subscriptions.data.length > 0;
 
     if (hasActiveSub) {
+      // Check which plan they have based on price amount
+      let plan = "pro";
       const subscription = subscriptions.data[0];
-      // Update profile to pro
+      const priceAmount = subscription.items.data[0]?.price?.unit_amount;
+      if (priceAmount && priceAmount >= 9700) {
+        plan = "agency";
+      }
+
       await supabaseClient
         .from("profiles")
         .update({
-          plan: "pro",
+          plan,
           stripe_customer_id: customerId,
           stripe_subscription_id: subscription.id,
           generations_limit: 999999,
@@ -62,8 +68,8 @@ serve(async (req) => {
 
       let subscriptionEnd = null;
       try {
-        const endTimestamp = typeof subscription.current_period_end === 'number' 
-          ? subscription.current_period_end * 1000 
+        const endTimestamp = typeof subscription.current_period_end === 'number'
+          ? subscription.current_period_end * 1000
           : Date.parse(String(subscription.current_period_end));
         if (!isNaN(endTimestamp)) {
           subscriptionEnd = new Date(endTimestamp).toISOString();
@@ -72,12 +78,12 @@ serve(async (req) => {
 
       return new Response(JSON.stringify({
         subscribed: true,
+        plan,
         subscription_end: subscriptionEnd,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     } else {
-      // Reset to free if no active subscription
       await supabaseClient
         .from("profiles")
         .update({

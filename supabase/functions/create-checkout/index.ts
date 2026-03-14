@@ -32,6 +32,13 @@ serve(async (req) => {
     const user = userData.user;
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
+    // Get plan type from request body (default to pro)
+    let planType = "pro";
+    try {
+      const body = await req.json();
+      if (body?.plan === "agency") planType = "agency";
+    } catch { /* no body, default to pro */ }
+
     // Find or create customer
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId: string;
@@ -42,20 +49,30 @@ serve(async (req) => {
       customerId = customer.id;
     }
 
-    // Find or create CopyHunter Pro product+price
+    // Find or create product+price
+    const productName = planType === "agency" ? "CopyHunter Agência" : "CopyHunter Pro";
+    const priceAmount = planType === "agency" ? 9700 : 2900;
+
     let priceId: string;
-    const products = await stripe.products.search({ query: 'name:"CopyHunter Pro"' });
+    const products = await stripe.products.search({ query: `name:"${productName}"` });
     if (products.data.length > 0) {
       const prices = await stripe.prices.list({ product: products.data[0].id, active: true, limit: 1 });
-      priceId = prices.data[0].id;
+      if (prices.data.length > 0) {
+        priceId = prices.data[0].id;
+      } else {
+        const price = await stripe.prices.create({
+          product: products.data[0].id,
+          unit_amount: priceAmount,
+          currency: "brl",
+          recurring: { interval: "month" },
+        });
+        priceId = price.id;
+      }
     } else {
-      const product = await stripe.products.create({
-        name: "CopyHunter Pro",
-        description: "Gerações ilimitadas, todas as plataformas, 10 variações, histórico completo, exportação",
-      });
+      const product = await stripe.products.create({ name: productName });
       const price = await stripe.prices.create({
         product: product.id,
-        unit_amount: 2900,
+        unit_amount: priceAmount,
         currency: "brl",
         recurring: { interval: "month" },
       });

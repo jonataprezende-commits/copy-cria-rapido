@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
+import { BusinessTypeSelector, BusinessType, templates } from "./BusinessTypeSelector";
+import { MentalTriggers } from "./MentalTriggers";
 
 const platforms = [
   { value: "meta", label: "Meta Ads (Feed + Stories)" },
@@ -36,39 +38,52 @@ interface GenerateFormProps {
     platform: string;
     tone: string;
     objective: string;
+    businessType?: string;
+    triggers?: string[];
   }) => void;
   isLoading: boolean;
 }
 
 export function GenerateForm({ onGenerate, isLoading }: GenerateFormProps) {
+  const { profile } = useAuth();
+  const isPro = profile?.plan === "pro" || profile?.plan === "agency";
+
+  const [businessType, setBusinessType] = useState<BusinessType>(
+    ((profile as any)?.preferred_template as BusinessType) || "infoproduto"
+  );
   const [productName, setProductName] = useState("");
   const [description, setDescription] = useState("");
   const [audience, setAudience] = useState("");
   const [platform, setPlatform] = useState("meta");
-  const [tone, setTone] = useState("urgencia");
+  const [tone, setTone] = useState(templates[businessType].defaultTone);
   const [objective, setObjective] = useState("Vendas");
-  const { profile } = useAuth();
+  const [triggers, setTriggers] = useState<string[]>([]);
 
-  const isPro = profile?.plan === "pro";
+  useEffect(() => {
+    setTone(templates[businessType].defaultTone);
+  }, [businessType]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onGenerate({ productName, description, audience, platform, tone, objective });
-  };
+  const template = templates[businessType];
 
-  // Filter platforms for free users
   const availablePlatforms = isPro
     ? platforms
     : platforms.filter((p) => ["meta", "google"].includes(p.value) || p.value === "campanha");
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onGenerate({ productName, description, audience, platform, tone, objective, businessType, triggers });
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      <BusinessTypeSelector selected={businessType} onChange={setBusinessType} />
+
       <div>
         <Label className="text-sm font-medium text-foreground">Nome do produto ou serviço</Label>
         <Input
           value={productName}
           onChange={(e) => setProductName(e.target.value)}
-          placeholder="ex: Curso de Excel para Iniciantes"
+          placeholder={template.productPlaceholder}
           className="mt-1.5 h-11 bg-background"
           required
         />
@@ -91,7 +106,7 @@ export function GenerateForm({ onGenerate, isLoading }: GenerateFormProps) {
         <Input
           value={audience}
           onChange={(e) => setAudience(e.target.value)}
-          placeholder="ex: Mulheres de 30 a 45 anos interessadas em finanças"
+          placeholder={template.audiencePlaceholder}
           className="mt-1.5 h-11 bg-background"
           required
         />
@@ -106,11 +121,7 @@ export function GenerateForm({ onGenerate, isLoading }: GenerateFormProps) {
             </SelectTrigger>
             <SelectContent>
               {availablePlatforms.map((p) => (
-                <SelectItem
-                  key={p.value}
-                  value={p.value}
-                  disabled={p.value === "campanha" && !isPro}
-                >
+                <SelectItem key={p.value} value={p.value} disabled={p.value === "campanha" && !isPro}>
                   {p.label}
                 </SelectItem>
               ))}
@@ -151,6 +162,8 @@ export function GenerateForm({ onGenerate, isLoading }: GenerateFormProps) {
           ))}
         </div>
       </div>
+
+      <MentalTriggers selected={triggers} onChange={setTriggers} />
 
       <Button
         type="submit"

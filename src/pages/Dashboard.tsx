@@ -1,66 +1,106 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { GenerateForm } from "@/components/dashboard/GenerateForm";
 import { CopyResults } from "@/components/dashboard/CopyResults";
 import { SkeletonLoader } from "@/components/dashboard/SkeletonLoader";
+import { UpgradeModal } from "@/components/dashboard/UpgradeModal";
 import { PenTool } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useSearchParams } from "react-router-dom";
 
-const mockCopies = [
-  {
-    id: 1,
-    titulo: "Aprenda Tráfego Pago do Zero",
-    texto: "Mais de 8.400 alunos já faturam com anúncios. Começa hoje por R$1.",
-    cta: "Quero começar agora",
-    contagem_chars: 98,
-    por_que_funciona: "Prova social + barreira de entrada baixíssima + urgência implícita",
-  },
-  {
-    id: 2,
-    titulo: "Seu primeiro cliente em 7 dias",
-    texto: "Método validado com R$50 de investimento. Acesso imediato + suporte.",
-    cta: "Ver o método completo",
-    contagem_chars: 89,
-    por_que_funciona: "Promessa específica de tempo + investimento pequeno = baixo risco percebido",
-  },
-  {
-    id: 3,
-    titulo: "Pare de perder dinheiro com ads",
-    texto: "Descubra como transformar R$10/dia em clientes reais. Sem complicação.",
-    cta: "Quero aprender agora",
-    contagem_chars: 94,
-    por_que_funciona: "Dor clara + solução acessível + CTA com desejo",
-  },
-];
+interface CopyVariation {
+  id: number;
+  titulo: string;
+  texto: string;
+  cta: string;
+  contagem_chars: number;
+  por_que_funciona: string;
+}
 
 const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<typeof mockCopies | null>(null);
+  const [results, setResults] = useState<CopyVariation[] | null>(null);
   const [currentPlatform, setCurrentPlatform] = useState("meta");
+  const [generationId, setGenerationId] = useState<string | null>(null);
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const { profile, refreshProfile, checkSubscription } = useAuth();
+  const [searchParams] = useSearchParams();
 
-  const handleGenerate = (data: { platform: string }) => {
+  useEffect(() => {
+    if (searchParams.get("checkout") === "success") {
+      toast.success("Assinatura Pro ativada com sucesso! 🎉");
+      checkSubscription();
+    }
+  }, [searchParams]);
+
+  const handleGenerate = async (data: {
+    productName: string;
+    description: string;
+    audience: string;
+    platform: string;
+    tone: string;
+    objective: string;
+  }) => {
+    // Check limits locally first
+    if (profile && profile.plan !== "pro" && profile.generations_used >= profile.generations_limit) {
+      setShowUpgrade(true);
+      return;
+    }
+
     setIsLoading(true);
     setResults(null);
     setCurrentPlatform(data.platform);
-    setTimeout(() => {
+
+    try {
+      const { data: result, error } = await supabase.functions.invoke("generate-copy", {
+        body: data,
+      });
+
+      if (error) throw error;
+
+      if (result.error === "limit_reached") {
+        setShowUpgrade(true);
+        return;
+      }
+
+      if (result.error) throw new Error(result.error);
+
+      setResults(result.copies);
+      setGenerationId(result.generation_id);
+      toast.success("Geração concluída com sucesso!");
+      await refreshProfile();
+    } catch (e: any) {
+      console.error("Generate error:", e);
+      toast.error(e.message || "Erro ao gerar copy. Tente novamente.");
+    } finally {
       setIsLoading(false);
-      setResults(mockCopies);
-    }, 2000);
+    }
   };
+
+  const isPro = profile?.plan === "pro";
+  const used = profile?.generations_used ?? 0;
+  const limit = profile?.generations_limit ?? 5;
+  const usagePercent = isPro ? 0 : Math.min((used / limit) * 100, 100);
 
   return (
     <div className="flex min-h-screen bg-background">
       <DashboardSidebar />
       <main className="flex-1 p-6 md:p-8 overflow-auto">
         {/* Usage bar */}
-        <div className="mb-6 flex items-center gap-3">
-          <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden max-w-xs">
-            <div className="h-full bg-primary rounded-full" style={{ width: "60%" }} />
+        {!isPro && (
+          <div className="mb-6 flex items-center gap-3">
+            <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden max-w-xs">
+              <div className="h-full bg-primary rounded-full transition-all duration-300" style={{ width: `${usagePercent}%` }} />
+            </div>
+            <span className="text-xs text-muted-foreground font-medium">
+              {used} de {limit} gerações usadas este mês
+            </span>
           </div>
-          <span className="text-xs text-muted-foreground font-medium">3 de 5 gerações usadas este mês</span>
-        </div>
+        )}
 
         <div className="grid lg:grid-cols-12 gap-8">
-          {/* Form */}
           <div className="lg:col-span-5">
             <div className="bg-card rounded-lg shadow-premium p-6">
               <h2 className="text-lg font-bold text-foreground mb-5 flex items-center gap-2">
@@ -71,14 +111,21 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Results */}
           <div className="lg:col-span-7">
             {isLoading && <SkeletonLoader />}
             {results && !isLoading && (
               <CopyResults
                 copies={results}
                 platform={currentPlatform}
-                onRegenerate={() => handleGenerate({ platform: currentPlatform })}
+                generationId={generationId}
+                onRegenerate={() => handleGenerate({
+                  productName: "",
+                  description: "",
+                  audience: "",
+                  platform: currentPlatform,
+                  tone: "",
+                  objective: "",
+                })}
               />
             )}
             {!results && !isLoading && (
@@ -92,6 +139,8 @@ const Dashboard = () => {
           </div>
         </div>
       </main>
+
+      <UpgradeModal open={showUpgrade} onOpenChange={setShowUpgrade} />
     </div>
   );
 };

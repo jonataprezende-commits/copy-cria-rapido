@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAuth } from "@/hooks/useAuth";
 
 const platforms = [
   { value: "meta", label: "Meta Ads (Feed + Stories)" },
@@ -40,17 +41,25 @@ interface GenerateFormProps {
 }
 
 export function GenerateForm({ onGenerate, isLoading }: GenerateFormProps) {
-  const [productName, setProductName] = useState("Curso de Tráfego Pago para Iniciantes");
-  const [description, setDescription] = useState("Curso online completo com certificado, do zero ao avançado");
-  const [audience, setAudience] = useState("Empreendedores e freelancers que querem aprender a anunciar online");
+  const [productName, setProductName] = useState("");
+  const [description, setDescription] = useState("");
+  const [audience, setAudience] = useState("");
   const [platform, setPlatform] = useState("meta");
   const [tone, setTone] = useState("urgencia");
   const [objective, setObjective] = useState("Vendas");
+  const { profile } = useAuth();
+
+  const isPro = profile?.plan === "pro";
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onGenerate({ productName, description, audience, platform, tone, objective });
   };
+
+  // Filter platforms for free users
+  const availablePlatforms = isPro
+    ? platforms
+    : platforms.filter((p) => ["meta", "google"].includes(p.value) || p.value === "campanha");
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -96,8 +105,14 @@ export function GenerateForm({ onGenerate, isLoading }: GenerateFormProps) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {platforms.map((p) => (
-                <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+              {availablePlatforms.map((p) => (
+                <SelectItem
+                  key={p.value}
+                  value={p.value}
+                  disabled={p.value === "campanha" && !isPro}
+                >
+                  {p.label}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>

@@ -1,0 +1,223 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+const platformGuides: Record<string, string> = {
+  meta: "Títulos até 40 chars, texto até 125 chars, CTA direto. Foco em benefício emocional.",
+  google: "Títulos até 30 chars (3 títulos), descrições até 90 chars (2). Palavras-chave no início.",
+  tiktok: "Tom jovem, gancho nos primeiros 3 segundos, linguagem de tendência, CTA com urgência.",
+  instagram: "Visual primeiro, copy curto, emojis permitidos, hashtags no final, CTA no link da bio.",
+  linkedin: "Tom profissional, dado ou estatística no início, foco em ROI e resultado de negócio.",
+  email: "Assunto até 50 chars (evitar palavras de spam), preheader, corpo com 1 CTA claro.",
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Não autorizado" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      { auth: { persistSession: false } }
+    );
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: userData, error: userError } = await supabase.auth.getUser(token);
+    if (userError || !userData.user) {
+      return new Response(JSON.stringify({ error: "Usuário não autenticado" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const userId = userData.user.id;
+
+    // Check plan limits
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", userId)
+      .single();
+
+    if (profileError || !profile) {
+      return new Response(JSON.stringify({ error: "Perfil não encontrado" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const isPro = profile.plan === "pro";
+    if (!isPro && profile.generations_used >= profile.generations_limit) {
+      return new Response(JSON.stringify({ error: "limit_reached", message: "Você atingiu o limite de gerações gratuitas deste mês." }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { productName, description, audience, platform, tone, objective } = await req.json();
+    const numVariations = isPro ? 10 : 3;
+
+    const systemPrompt = `Você é o melhor copywriter de anúncios do Brasil.
+Escreva SEMPRE em português brasileiro (pt-BR).
+Gere ${numVariations} variações de copy para ${platform}.
+Regras da plataforma ${platform}:
+${platformGuides[platform] || "Copy persuasivo e direto."}
+Tom desejado: ${tone}
+Objetivo: ${objective}
+Para cada variação entregue:
+- titulo
+- texto
+- cta (call to action)
+- contagem_chars (contagem total de caracteres do titulo + texto + cta)
+- por_que_funciona (1 frase explicando por que esse copy funciona)
+Seja direto, persuasivo, use gatilhos mentais naturalmente.
+Escreva como brasileiro — sem português de Portugal.
+Use gírias e expressões brasileiras quando o tom for descontraído.`;
+
+    const userPrompt = `Produto: ${productName}
+Descrição: ${description}
+Público-alvo: ${audience}
+Plataforma: ${platform}
+Tom: ${tone}
+Objetivo: ${objective}
+
+Gere ${numVariations} variações de copy.`;
+
+    console.log("[GENERATE-COPY] Calling AI for user", userId);
+
+    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "return_copies",
+              description: "Return the generated ad copies",
+              parameters: {
+                type: "object",
+                properties: {
+                  copies: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        id: { type: "number" },
+                        titulo: { type: "string" },
+                        texto: { type: "string" },
+                        cta: { type: "string" },
+                        contagem_chars: { type: "number" },
+                        por_que_funciona: { type: "string" },
+                      },
+                      required: ["id", "titulo", "texto", "cta", "contagem_chars", "por_que_funciona"],
+                      additionalProperties: false,
+                    },
+                  },
+                },
+                required: ["copies"],
+                additionalProperties: false,
+              },
+            },
+          },
+        ],
+        tool_choice: { type: "function", function: { name: "return_copies" } },
+      }),
+    });
+
+    if (!aiResponse.ok) {
+      const errText = await aiResponse.text();
+      console.error("[GENERATE-COPY] AI gateway error:", aiResponse.status, errText);
+      if (aiResponse.status === 429) {
+        return new Response(JSON.stringify({ error: "Limite de requisições atingido. Tente novamente em alguns instantes." }), {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (aiResponse.status === 402) {
+        return new Response(JSON.stringify({ error: "Créditos de IA esgotados." }), {
+          status: 402,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      throw new Error(`AI error: ${aiResponse.status}`);
+    }
+
+    const aiData = await aiResponse.json();
+    const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
+    if (!toolCall) throw new Error("No tool call in AI response");
+
+    const copies = JSON.parse(toolCall.function.arguments);
+
+    // Save generation to DB
+    const { data: generation, error: genError } = await supabase
+      .from("generations")
+      .insert({
+        user_id: userId,
+        product_name: productName,
+        product_description: description,
+        target_audience: audience,
+        platform,
+        tone,
+        objective,
+        copies: copies.copies,
+      })
+      .select()
+      .single();
+
+    if (genError) {
+      console.error("[GENERATE-COPY] DB insert error:", genError);
+    }
+
+    // Increment usage
+    await supabase.rpc("increment_generations_used", { user_uuid: userId });
+
+    // Log usage
+    await supabase.from("usage_logs").insert({
+      user_id: userId,
+      action: "generate",
+      platform,
+    });
+
+    console.log("[GENERATE-COPY] Success for user", userId);
+
+    return new Response(JSON.stringify({
+      copies: copies.copies,
+      generation_id: generation?.id,
+    }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    console.error("[GENERATE-COPY] Error:", error);
+    const msg = error instanceof Error ? error.message : "Erro desconhecido";
+    return new Response(JSON.stringify({ error: msg }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});

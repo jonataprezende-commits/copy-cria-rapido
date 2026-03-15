@@ -51,8 +51,6 @@ const Treinar = () => {
   const isPro = profile?.plan === "pro" || profile?.plan === "agency";
   const used = (profile as any)?.coach_sessions_used ?? 0;
   const limit = (profile as any)?.coach_sessions_limit ?? 5;
-  const xp = (profile as any)?.xp ?? 0;
-  const xpLevel = (profile as any)?.xp_level ?? "Iniciante";
 
   const handleEvaluate = async () => {
     if (!isPro && used >= limit) {
@@ -87,25 +85,25 @@ const Treinar = () => {
   return (
     <div className="flex min-h-screen bg-background">
       <DashboardSidebar />
-      <main className="flex-1 p-6 md:p-8 overflow-auto">
-        <h1 className="text-2xl font-bold text-foreground mb-1 flex items-center gap-2">
-          <GraduationCap className="w-6 h-6 text-primary" />
+      <main className="flex-1 p-4 md:p-8 overflow-auto">
+        <h1 className="text-xl md:text-2xl font-bold text-foreground mb-1 flex items-center gap-2">
+          <GraduationCap className="w-5 md:w-6 h-5 md:h-6 text-primary" />
           Treinar Copy
         </h1>
-        <p className="text-sm text-muted-foreground mb-6">Escreva um copy do zero e receba feedback da IA.</p>
+        <p className="text-sm text-muted-foreground mb-4 md:mb-6">Escreva um copy do zero e receba feedback da IA.</p>
 
         {!isPro && (
           <p className="text-xs text-muted-foreground mb-4">{used} de {limit} avaliações usadas este mês</p>
         )}
 
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid lg:grid-cols-2 gap-4 md:gap-8">
           {/* Editor */}
-          <div className="bg-card rounded-lg shadow-premium p-6 space-y-4">
+          <div className="bg-card rounded-lg shadow-premium p-4 md:p-6 space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-sm font-medium text-foreground">Plataforma</Label>
                 <Select value={platform} onValueChange={setPlatform}>
-                  <SelectTrigger className="mt-1.5 h-11 bg-background"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="mt-1.5 h-11 bg-background text-base"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {platforms.map((p) => (
                       <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
@@ -116,7 +114,7 @@ const Treinar = () => {
               <div>
                 <Label className="text-sm font-medium text-foreground">Objetivo</Label>
                 <Select value={objective} onValueChange={setObjective}>
-                  <SelectTrigger className="mt-1.5 h-11 bg-background"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="mt-1.5 h-11 bg-background text-base"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {objectives.map((o) => (
                       <SelectItem key={o} value={o}>{o}</SelectItem>
@@ -127,17 +125,17 @@ const Treinar = () => {
             </div>
             <div>
               <Label className="text-sm font-medium text-foreground">Headline</Label>
-              <Input value={headline} onChange={(e) => setHeadline(e.target.value)} placeholder="Escreva seu headline:" className="mt-1.5 h-11 bg-background" />
+              <Input value={headline} onChange={(e) => setHeadline(e.target.value)} placeholder="Escreva seu headline:" className="mt-1.5 h-11 bg-background text-base" />
             </div>
             <div>
               <Label className="text-sm font-medium text-foreground">Corpo</Label>
-              <Textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder="Escreva o corpo:" className="mt-1.5 bg-background resize-none" rows={4} />
+              <Textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder="Escreva o corpo:" className="mt-1.5 bg-background resize-none text-base" rows={4} />
             </div>
             <div>
               <Label className="text-sm font-medium text-foreground">CTA</Label>
-              <Input value={cta} onChange={(e) => setCta(e.target.value)} placeholder="Escreva seu CTA:" className="mt-1.5 h-11 bg-background" />
+              <Input value={cta} onChange={(e) => setCta(e.target.value)} placeholder="Escreva seu CTA:" className="mt-1.5 h-11 bg-background text-base" />
             </div>
-            <Button onClick={handleEvaluate} disabled={loading || !headline.trim()} className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold">
+            <Button onClick={handleEvaluate} disabled={loading || !headline.trim()} className="w-full h-11 min-h-[44px] bg-primary hover:bg-primary/90 text-primary-foreground font-semibold">
               {loading ? "Avaliando..." : "Avaliar copy →"}
             </Button>
           </div>
@@ -146,7 +144,7 @@ const Treinar = () => {
           {result ? (
             <div className="space-y-4">
               {/* Scores */}
-              <div className="bg-card rounded-lg shadow-premium p-6 space-y-4">
+              <div className="bg-card rounded-lg shadow-premium p-4 md:p-6 space-y-4">
                 {Object.entries(result.notas).map(([key, value]) => (
                   <div key={key}>
                     <div className="flex justify-between text-xs mb-1">
@@ -166,18 +164,18 @@ const Treinar = () => {
               </div>
 
               {/* Challenge */}
-              <div className="bg-accent/10 rounded-lg p-5 border border-accent/30">
+              <div className="bg-accent/10 rounded-lg p-4 md:p-5 border border-accent/30">
                 <h4 className="text-sm font-semibold text-accent mb-2">🎯 Desafio do coach</h4>
                 <p className="text-sm text-foreground">{result.desafio}</p>
               </div>
 
               {/* Coach version */}
-              <Button variant="outline" onClick={() => setShowCoachVersion(!showCoachVersion)} className="w-full text-foreground">
+              <Button variant="outline" onClick={() => setShowCoachVersion(!showCoachVersion)} className="w-full text-foreground min-h-[44px]">
                 {showCoachVersion ? "Esconder versão do coach" : "Ver versão do coach"}
               </Button>
               {showCoachVersion && (
-                <div className="bg-card rounded-lg shadow-premium p-5 border-2 border-primary/30">
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="bg-card rounded-lg shadow-premium p-4 md:p-5 border-2 border-primary/30">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">Seu copy</p>
                       <p className="text-sm text-foreground">{headline}</p>

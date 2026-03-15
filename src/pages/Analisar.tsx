@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
-import { FileSearch, Copy, Check, ArrowRight } from "lucide-react";
+import { FileSearch, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -99,17 +99,17 @@ const Analisar = () => {
   return (
     <div className="flex min-h-screen bg-background">
       <DashboardSidebar />
-      <main className="flex-1 p-6 md:p-8 overflow-auto">
-        <h1 className="text-2xl font-bold text-foreground mb-1">Analise seu anúncio</h1>
-        <p className="text-sm text-muted-foreground mb-6">Cole qualquer copy e descubra o que está funcionando.</p>
+      <main className="flex-1 p-4 md:p-8 overflow-auto">
+        <h1 className="text-xl md:text-2xl font-bold text-foreground mb-1">Analise seu anúncio</h1>
+        <p className="text-sm text-muted-foreground mb-4 md:mb-6">Cole qualquer copy e descubra o que está funcionando.</p>
 
         {!isPro && (
           <p className="text-xs text-muted-foreground mb-4">{used} de {limit} análises usadas este mês</p>
         )}
 
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid lg:grid-cols-2 gap-4 md:gap-8">
           {/* Input */}
-          <div className="bg-card rounded-lg shadow-premium p-6">
+          <div className="bg-card rounded-lg shadow-premium p-4 md:p-6">
             <div className="space-y-4">
               <div>
                 <Label className="text-sm font-medium text-foreground">Copy para análise</Label>
@@ -117,14 +117,14 @@ const Analisar = () => {
                   value={copyText}
                   onChange={(e) => setCopyText(e.target.value)}
                   placeholder="Cole aqui o copy que você quer analisar..."
-                  className="mt-1.5 bg-background resize-none"
+                  className="mt-1.5 bg-background resize-none text-base"
                   rows={6}
                 />
               </div>
               <div>
                 <Label className="text-sm font-medium text-foreground">Plataforma</Label>
                 <Select value={platform} onValueChange={setPlatform}>
-                  <SelectTrigger className="mt-1.5 h-11 bg-background">
+                  <SelectTrigger className="mt-1.5 h-11 bg-background text-base">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -137,7 +137,7 @@ const Analisar = () => {
               <Button
                 onClick={handleAnalyze}
                 disabled={loading || !copyText.trim()}
-                className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+                className="w-full h-11 min-h-[44px] bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
               >
                 {loading ? "Analisando..." : "Analisar agora →"}
               </Button>
@@ -148,8 +148,8 @@ const Analisar = () => {
           {result && (
             <div className="space-y-4">
               {/* Score */}
-              <div className="bg-card rounded-lg shadow-premium p-6 text-center">
-                <p className={`text-5xl font-extrabold ${getScoreColor(result.nota_geral)}`}>
+              <div className="bg-card rounded-lg shadow-premium p-4 md:p-6 text-center">
+                <p className={`text-4xl md:text-5xl font-extrabold ${getScoreColor(result.nota_geral)}`}>
                   {result.nota_geral.toFixed(1)}
                 </p>
                 <p className={`text-sm font-medium mt-1 ${getScoreColor(result.nota_geral)}`}>
@@ -159,11 +159,11 @@ const Analisar = () => {
               </div>
 
               {/* Breakdown */}
-              <div className="bg-card rounded-lg shadow-premium p-6 space-y-4">
+              <div className="bg-card rounded-lg shadow-premium p-4 md:p-6 space-y-4">
                 {Object.entries(result.breakdown).map(([key, value]) => (
                   <div key={key}>
                     <div className="flex justify-between text-xs mb-1">
-                      <span className="font-medium text-foreground">{breakdownLabels[key] || key}</span>
+                      <span className="font-medium text-foreground text-[11px] md:text-xs">{breakdownLabels[key] || key}</span>
                       <span className="text-muted-foreground">{value}/10</span>
                     </div>
                     <Progress value={value * 10} className="h-2" />
@@ -173,7 +173,7 @@ const Analisar = () => {
               </div>
 
               {/* Positives */}
-              <div className="bg-green-50 dark:bg-green-950/20 rounded-lg p-5">
+              <div className="bg-green-50 dark:bg-green-950/20 rounded-lg p-3 md:p-5">
                 <h4 className="text-sm font-semibold text-green-700 dark:text-green-400 mb-2">Pontos fortes</h4>
                 <ul className="space-y-1">
                   {result.pontos_positivos.map((p, i) => (
@@ -183,7 +183,7 @@ const Analisar = () => {
               </div>
 
               {/* Negatives */}
-              <div className="bg-red-50 dark:bg-red-950/20 rounded-lg p-5">
+              <div className="bg-red-50 dark:bg-red-950/20 rounded-lg p-3 md:p-5">
                 <h4 className="text-sm font-semibold text-destructive mb-2">O que melhorar</h4>
                 <ul className="space-y-1">
                   {result.pontos_negativos.map((p, i) => (
@@ -193,13 +193,13 @@ const Analisar = () => {
               </div>
 
               {/* Improved version */}
-              <div className="bg-card rounded-lg shadow-premium p-6 border-2 border-primary/30">
+              <div className="bg-card rounded-lg shadow-premium p-4 md:p-6 border-2 border-primary/30">
                 <h4 className="text-sm font-semibold text-foreground mb-3">Versão melhorada</h4>
                 <p className="font-semibold text-foreground text-sm">{result.versao_melhorada.titulo}</p>
                 <p className="text-sm text-muted-foreground mt-2">{result.versao_melhorada.texto}</p>
                 <p className="text-sm text-primary font-medium mt-2">CTA: {result.versao_melhorada.cta}</p>
                 <div className="flex gap-2 mt-4">
-                  <Button size="sm" variant="outline" onClick={handleCopyImproved} className="text-foreground">
+                  <Button size="sm" variant="outline" onClick={handleCopyImproved} className="text-foreground min-h-[44px]">
                     {copied ? <Check className="w-3.5 h-3.5 mr-1" /> : <Copy className="w-3.5 h-3.5 mr-1" />}
                     Copiar versão melhorada
                   </Button>

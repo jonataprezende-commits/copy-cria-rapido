@@ -46,14 +46,6 @@ const Campanha = () => {
     setProgress({ current: 0, label: "Iniciando..." });
 
     try {
-      const platformOrder = [
-        { key: "meta", label: "Meta Ads", count: 10 },
-        { key: "google", label: "Google Ads", count: 20 },
-        { key: "tiktok", label: "TikTok", count: 30 },
-        { key: "instagram", label: "Instagram", count: 40 },
-        { key: "headlines", label: "Headlines", count: 50 },
-      ];
-
       const { data, error } = await supabase.functions.invoke("generate-campaign", {
         body: { productName, description, audience, objective },
       });
@@ -101,11 +93,11 @@ const Campanha = () => {
     return (
       <div className="flex min-h-screen bg-background">
         <DashboardSidebar />
-        <main className="flex-1 p-6 md:p-8 flex items-center justify-center">
+        <main className="flex-1 p-4 md:p-8 flex items-center justify-center">
           <div className="relative w-full max-w-2xl">
-            <div className="blur-sm pointer-events-none select-none bg-card rounded-lg shadow-premium p-8">
-              <h2 className="text-2xl font-bold text-foreground mb-2">Gere 50 anúncios em 1 clique</h2>
-              <p className="text-muted-foreground">Todas as plataformas. Um produto. Zero esforço.</p>
+            <div className="blur-sm pointer-events-none select-none bg-card rounded-lg shadow-premium p-6 md:p-8">
+              <h2 className="text-xl md:text-2xl font-bold text-foreground mb-2">Gere 50 anúncios em 1 clique</h2>
+              <p className="text-muted-foreground text-sm">Todas as plataformas. Um produto. Zero esforço.</p>
             </div>
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/60 rounded-lg">
               <Lock className="w-10 h-10 text-muted-foreground/40 mb-4" />
@@ -121,40 +113,40 @@ const Campanha = () => {
   return (
     <div className="flex min-h-screen bg-background">
       <DashboardSidebar />
-      <main className="flex-1 p-6 md:p-8 overflow-auto">
+      <main className="flex-1 p-4 md:p-8 overflow-auto">
         {/* Hero */}
-        <div className="bg-primary/5 rounded-lg p-8 mb-8 text-center">
-          <h1 className="text-2xl font-bold text-foreground mb-2">Gere 50 anúncios em 1 clique</h1>
+        <div className="bg-primary/5 rounded-lg p-6 md:p-8 mb-6 md:mb-8 text-center">
+          <h1 className="text-xl md:text-2xl font-bold text-foreground mb-2">Gere 50 anúncios em 1 clique</h1>
           <p className="text-sm text-muted-foreground">Todas as plataformas. Um produto. Zero esforço.</p>
         </div>
 
         {!results ? (
-          <div className="max-w-lg mx-auto bg-card rounded-lg shadow-premium p-6 space-y-4">
+          <div className="max-w-lg mx-auto bg-card rounded-lg shadow-premium p-4 md:p-6 space-y-4">
             <div>
               <Label className="text-sm font-medium text-foreground">Nome do produto</Label>
-              <Input value={productName} onChange={(e) => setProductName(e.target.value)} className="mt-1.5 h-11 bg-background" required />
+              <Input value={productName} onChange={(e) => setProductName(e.target.value)} className="mt-1.5 h-11 bg-background text-base" required />
             </div>
             <div>
               <Label className="text-sm font-medium text-foreground">Descrição em 1 frase</Label>
-              <Textarea value={description} onChange={(e) => setDescription(e.target.value)} className="mt-1.5 bg-background resize-none" rows={2} required />
+              <Textarea value={description} onChange={(e) => setDescription(e.target.value)} className="mt-1.5 bg-background resize-none text-base" rows={2} required />
             </div>
             <div>
               <Label className="text-sm font-medium text-foreground">Público-alvo</Label>
-              <Input value={audience} onChange={(e) => setAudience(e.target.value)} className="mt-1.5 h-11 bg-background" required />
+              <Input value={audience} onChange={(e) => setAudience(e.target.value)} className="mt-1.5 h-11 bg-background text-base" required />
             </div>
             <div>
               <Label className="text-sm font-medium text-foreground">Objetivo</Label>
               <div className="flex flex-wrap gap-2 mt-1.5">
                 {objectives.map((obj) => (
                   <button key={obj} type="button" onClick={() => setObjective(obj)}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-150 ${
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-150 min-h-[44px] ${
                       objective === obj ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
                     }`}>{obj}</button>
                 ))}
               </div>
             </div>
             <Button onClick={handleGenerate} disabled={loading || !productName.trim()}
-              className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base">
+              className="w-full h-12 min-h-[44px] bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base">
               <Zap className="w-4 h-4 mr-2" />
               {loading ? "Gerando..." : "⚡ Gerar 50 anúncios agora"}
             </Button>
@@ -167,30 +159,30 @@ const Campanha = () => {
           </div>
         ) : (
           <div>
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-3">
               <h2 className="text-lg font-bold text-foreground">50 anúncios gerados para {productName}</h2>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={handleCopyAll} className="text-foreground">
+              <div className="flex gap-2 w-full md:w-auto">
+                <Button size="sm" variant="outline" onClick={handleCopyAll} className="text-foreground min-h-[44px] flex-1 md:flex-none">
                   <Copy className="w-3.5 h-3.5 mr-1" /> Copiar todos
                 </Button>
-                <Button size="sm" variant="outline" onClick={exportCsv} className="text-foreground">
+                <Button size="sm" variant="outline" onClick={exportCsv} className="text-foreground min-h-[44px] flex-1 md:flex-none">
                   <Download className="w-3.5 h-3.5 mr-1" /> CSV
                 </Button>
               </div>
             </div>
 
             <Tabs defaultValue="meta">
-              <TabsList className="mb-4">
-                <TabsTrigger value="meta">Meta Ads — {results.meta?.length || 0}</TabsTrigger>
-                <TabsTrigger value="google">Google Ads — {results.google?.length || 0}</TabsTrigger>
-                <TabsTrigger value="tiktok">TikTok — {results.tiktok?.length || 0}</TabsTrigger>
-                <TabsTrigger value="instagram">Instagram — {results.instagram?.length || 0}</TabsTrigger>
-                <TabsTrigger value="headlines">Headlines — {results.headlines?.length || 0}</TabsTrigger>
+              <TabsList className="mb-4 overflow-x-auto flex w-full md:w-auto">
+                <TabsTrigger value="meta" className="text-xs md:text-sm whitespace-nowrap">Meta Ads — {results.meta?.length || 0}</TabsTrigger>
+                <TabsTrigger value="google" className="text-xs md:text-sm whitespace-nowrap">Google Ads — {results.google?.length || 0}</TabsTrigger>
+                <TabsTrigger value="tiktok" className="text-xs md:text-sm whitespace-nowrap">TikTok — {results.tiktok?.length || 0}</TabsTrigger>
+                <TabsTrigger value="instagram" className="text-xs md:text-sm whitespace-nowrap">Instagram — {results.instagram?.length || 0}</TabsTrigger>
+                <TabsTrigger value="headlines" className="text-xs md:text-sm whitespace-nowrap">Headlines — {results.headlines?.length || 0}</TabsTrigger>
               </TabsList>
               {Object.entries(results).map(([key, copies]) => (
                 <TabsContent key={key} value={key} className="space-y-3">
                   {(copies as CampaignCopy[]).map((copy, i) => (
-                    <div key={i} className="bg-card rounded-lg shadow-premium p-4">
+                    <div key={i} className="bg-card rounded-lg shadow-premium p-3 md:p-4">
                       <p className="font-semibold text-foreground text-sm">{copy.titulo}</p>
                       <p className="text-sm text-muted-foreground mt-1">{copy.texto}</p>
                       <p className="text-sm text-primary font-medium mt-1">CTA: {copy.cta}</p>

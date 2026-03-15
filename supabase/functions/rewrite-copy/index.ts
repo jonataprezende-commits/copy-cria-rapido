@@ -1,73 +1,77 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+}
+
+async function callAI(prompt: string): Promise<string> {
+  const openaiKey = Deno.env.get("OPENAI_API_KEY")
+  const geminiKey = Deno.env.get("GEMINI_API_KEY")
+
+  if (openaiKey) {
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${openaiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ model: "gpt-4o", messages: [{ role: "user", content: prompt }], max_tokens: 2000 })
+    })
+    const data = await res.json()
+    return data.choices[0].message.content
+  }
+
+  if (geminiKey) {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+      }
+    )
+    const data = await res.json()
+    return data.candidates[0].content.parts[0].text
+  }
+
+  throw new Error("Configure OPENAI_API_KEY ou GEMINI_API_KEY nos Secrets do Supabase.")
+}
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders })
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const { copyText, platform, versions } = await req.json()
+    const tiposAtivos = versions?.length > 0 ? versions.join(", ") : "curta, longa, agressiva, emocional"
 
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return new Response(JSON.stringify({ error: "Não autorizado" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const prompt = `Você é o melhor copywriter do Brasil.
+Reescreva este copy para ${platform} nos estilos: ${tiposAtivos}
+Original: "${copyText}"
 
-    const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabase.auth.getUser(token);
-    if (userError || !userData.user) return new Response(JSON.stringify({ error: "Usuário não autenticado" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-
-    const userId = userData.user.id;
-    const { data: profile } = await supabase.from("profiles").select("*").eq("id", userId).single();
-    if (!profile) return new Response(JSON.stringify({ error: "Perfil não encontrado" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-
-    const isPro = profile.plan === "pro" || profile.plan === "agency";
-    if (!isPro && (profile.rewrites_used || 0) >= (profile.rewrites_limit || 3)) {
-      return new Response(JSON.stringify({ error: "limit_reached" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-
-    const { copyText, platform, versions } = await req.json();
-    const versionsStr = versions.join(", ");
-
-    const systemPrompt = `Reescreva este copy para ${platform} em ${versions.length} versões.
-Original: '${copyText}'
 Definições:
 - curta: máx 80 chars, headline + CTA direto
 - longa: mín 200 chars, storytelling completo
-- agressiva: imperativo, escassez e urgência obrigatórios
+- agressiva: urgência e escassez obrigatórios, tom imperativo
 - emocional: empatia, transformação, CTA suave
 - tecnica: dados, ROI, linguagem técnica
-- humoristica: leve, ironia sutil, memorável
-Versões solicitadas: ${versionsStr}
-Retorne APENAS JSON válido:
-{ "versoes": [{ "tipo": "curta", "titulo": "...", "texto": "...", "cta": "...", "chars": 95, "gatilho_principal": "Urgência" }] }`;
+- humoristica: leve, irônico, memorável
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [{ role: "system", content: systemPrompt }, { role: "user", content: `Reescreva: "${copyText}"` }],
-        response_format: { type: "json_object" },
-      }),
-    });
+Retorne APENAS JSON válido sem markdown:
+{
+  "versoes": [
+    { "tipo": "curta", "titulo": "...", "texto": "...", "cta": "...", "chars": 78, "gatilho_principal": "Urgência" }
+  ]
+}`
 
-    if (!aiResponse.ok) throw new Error(`AI error: ${aiResponse.status}`);
-    const aiData = await aiResponse.json();
-    const result = JSON.parse(aiData.choices?.[0]?.message?.content);
+    const raw = await callAI(prompt)
+    const clean = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim()
+    const result = JSON.parse(clean)
 
-    if (!isPro) {
-      await supabase.from("profiles").update({ rewrites_used: (profile.rewrites_used || 0) + 1 }).eq("id", userId);
-    }
-
-    return new Response(JSON.stringify(result), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify(result), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
+    })
   } catch (error) {
-    const msg = error instanceof Error ? error.message : "Erro desconhecido";
-    console.error("[REWRITE-COPY] Error:", msg);
-    return new Response(JSON.stringify({ error: msg }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" }
+    })
   }
-});
+})

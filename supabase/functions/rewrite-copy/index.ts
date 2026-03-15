@@ -63,7 +63,7 @@ Retorne APENAS JSON válido sem markdown:
 }`
 
     const raw = await callAI(prompt)
-    const clean = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim()
+    const clean = raw.replace(/\`\`\`json\n?/g, "").replace(/\`\`\`\n?/g, "").trim()
     const result = JSON.parse(clean)
 
     return new Response(JSON.stringify(result), {

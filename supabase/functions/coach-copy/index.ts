@@ -14,7 +14,7 @@ async function callAI(prompt: string): Promise<string> {
     const res = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: { "Authorization": `Bearer ${openaiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model: "gpt-4o", messages: [{ role: "user", content: prompt }], max_tokens: 1500 })
+      body: JSON.stringify({ model: "gpt-4o", messages: [{ role: "user", content: prompt }], max_tokens: 2000 })
     })
     const data = await res.json()
     return data.choices[0].message.content
@@ -59,7 +59,7 @@ Retorne APENAS JSON válido sem markdown:
 }`
 
     const raw = await callAI(prompt)
-    const clean = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim()
+    const clean = raw.replace(/\`\`\`json\n?/g, "").replace(/\`\`\`\n?/g, "").trim()
     const result = JSON.parse(clean)
 
     return new Response(JSON.stringify(result), {

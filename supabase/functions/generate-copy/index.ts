@@ -3,8 +3,9 @@ import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+}
 
 const platformGuides: Record<string, string> = {
   meta: "Títulos até 40 chars, texto até 125 chars, CTA direto. Foco em benefício emocional.",
@@ -15,14 +16,62 @@ const platformGuides: Record<string, string> = {
   email: "Assunto até 50 chars (evitar palavras de spam), preheader, corpo com 1 CTA claro.",
 };
 
+async function callAI(prompt: string, systemPrompt?: string, tools?: any): Promise<any> {
+  const openaiKey = Deno.env.get("OPENAI_API_KEY")
+  const geminiKey = Deno.env.get("GEMINI_API_KEY")
+
+  if (openaiKey) {
+    const messages = [];
+    if (systemPrompt) messages.push({ role: "system", content: systemPrompt });
+    messages.push({ role: "user", content: prompt });
+    
+    const body: any = { model: "gpt-4o", messages, max_tokens: 2000 };
+    if (tools) {
+      body.tools = tools;
+      body.tool_choice = { type: "function", function: { name: tools[0].function.name } };
+    }
+    
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${openaiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    })
+    const data = await res.json()
+    if (tools) {
+      return JSON.parse(data.choices[0].message.tool_calls[0].function.arguments);
+    }
+    return data.choices[0].message.content
+  }
+
+  if (geminiKey) {
+    // Gemini tool calling format is different, but for simplicity we'll just ask for JSON
+    const fullPrompt = systemPrompt ? `${systemPrompt}\n\n${prompt}` : prompt;
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contents: [{ parts: [{ text: fullPrompt }] }] })
+      }
+    )
+    const data = await res.json()
+    const text = data.candidates[0].content.parts[0].text;
+    if (tools) {
+      const clean = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+      return JSON.parse(clean);
+    }
+    return text;
+  }
+
+  throw new Error("Configure OPENAI_API_KEY ou GEMINI_API_KEY nos Secrets do Supabase.")
+}
+
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders }));
   }
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
@@ -97,19 +146,7 @@ Gere ${numVariations} variações de copy.`;
 
     console.log("[GENERATE-COPY] Calling AI for user", userId);
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        tools: [
+    const tools = [
           {
             type: "function",
             function: {
@@ -141,27 +178,11 @@ Gere ${numVariations} variações de copy.`;
               },
             },
           },
-        ],
-        tool_choice: { type: "function", function: { name: "return_copies" } },
-      }),
-    });
-
-    if (!aiResponse.ok) {
-      const errText = await aiResponse.text();
-      console.error("[GENERATE-COPY] AI gateway error:", aiResponse.status, errText);
-      if (aiResponse.status === 429) {
-        return new Response(JSON.stringify({ error: "Limite de requisições atingido. Tente novamente em alguns instantes." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      throw new Error(`AI error: ${aiResponse.status}`);
-    }
-
-    const aiData = await aiResponse.json();
-    const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall) throw new Error("No tool call in AI response");
-
-    const copies = JSON.parse(toolCall.function.arguments);
+        ];
+    
+    // Add instruction to return JSON if using Gemini
+    const finalSystemPrompt = systemPrompt + "\n\nIMPORTANT: You must return ONLY valid JSON matching the return_copies schema.";
+    const copies = await callAI(userPrompt, finalSystemPrompt, tools);
 
     const { data: generation, error: genError } = await supabase.from("generations").insert({
       user_id: userId, product_name: productName, product_description: description,

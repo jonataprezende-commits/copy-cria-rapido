@@ -43,7 +43,7 @@ Retorne APENAS JSON sem markdown:
 {"copies":[{"id":1,"titulo":"...","texto":"...","cta":"..."}]}`
 
   const raw = await callAI(prompt)
-  const clean = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim()
+  const clean = raw.replace(/\`\`\`json\n?/g, "").replace(/\`\`\`\n?/g, "").trim()
   const parsed = JSON.parse(clean)
   return parsed.copies.map((c: any) => ({ ...c, platform }))
 }

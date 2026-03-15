@@ -7,6 +7,14 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { lovable } from "@/integrations/lovable/index";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -15,6 +23,10 @@ const Login = () => {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
   const navigate = useNavigate();
   const { signIn, signUp, user } = useAuth();
 
@@ -63,6 +75,23 @@ const Login = () => {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotEmail.trim()) return;
+    setForgotLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+        redirectTo: `${window.location.origin}/redefinir-senha`,
+      });
+      if (error) throw error;
+      setForgotSent(true);
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao enviar e-mail.");
+    } finally {
+      setForgotLoading(false);
     }
   };
 
@@ -139,7 +168,7 @@ const Login = () => {
                   placeholder="Seu nome"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="mt-1 h-11 bg-background"
+                  className="mt-1 h-11 bg-background text-base"
                 />
               </div>
             )}
@@ -152,11 +181,22 @@ const Login = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="mt-1 h-11 bg-background"
+                className="mt-1 h-11 bg-background text-base"
               />
             </div>
             <div>
-              <Label htmlFor="password" className="text-sm font-medium text-foreground">Senha</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password" className="text-sm font-medium text-foreground">Senha</Label>
+                {isLogin && (
+                  <button
+                    type="button"
+                    onClick={() => { setShowForgot(true); setForgotSent(false); setForgotEmail(email); }}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    Esqueci minha senha
+                  </button>
+                )}
+              </div>
               <Input
                 id="password"
                 type="password"
@@ -165,7 +205,7 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
-                className="mt-1 h-11 bg-background"
+                className="mt-1 h-11 bg-background text-base"
               />
             </div>
             <Button
@@ -178,6 +218,61 @@ const Login = () => {
           </form>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      <Dialog open={showForgot} onOpenChange={setShowForgot}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Recuperar senha</DialogTitle>
+            <DialogDescription>
+              Digite seu e-mail e enviaremos um link para redefinir sua senha.
+            </DialogDescription>
+          </DialogHeader>
+          {forgotSent ? (
+            <div className="py-4 text-center">
+              <p className="text-sm text-green-600 font-medium">
+                E-mail enviado! Verifique sua caixa de entrada e siga as instruções.
+              </p>
+              <Button
+                variant="ghost"
+                className="mt-4 text-muted-foreground"
+                onClick={() => setShowForgot(false)}
+              >
+                Voltar para o login
+              </Button>
+            </div>
+          ) : (
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div>
+                <Label htmlFor="forgot-email" className="text-sm font-medium text-foreground">E-mail</Label>
+                <Input
+                  id="forgot-email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  required
+                  className="mt-1 h-11 bg-background text-base"
+                />
+              </div>
+              <Button
+                type="submit"
+                disabled={forgotLoading}
+                className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+              >
+                {forgotLoading ? "Enviando..." : "Enviar link de recuperação"}
+              </Button>
+              <button
+                type="button"
+                onClick={() => setShowForgot(false)}
+                className="w-full text-sm text-muted-foreground hover:underline"
+              >
+                Voltar para o login
+              </button>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

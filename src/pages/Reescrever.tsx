@@ -92,31 +92,31 @@ const Reescrever = () => {
   return (
     <div className="flex min-h-screen bg-background">
       <DashboardSidebar />
-      <main className="flex-1 p-6 md:p-8 overflow-auto">
-        <h1 className="text-2xl font-bold text-foreground mb-1">Reescrever Copy</h1>
-        <p className="text-sm text-muted-foreground mb-6">Cole um copy existente e receba múltiplas versões melhoradas.</p>
+      <main className="flex-1 p-4 md:p-8 overflow-auto">
+        <h1 className="text-xl md:text-2xl font-bold text-foreground mb-1">Reescrever Copy</h1>
+        <p className="text-sm text-muted-foreground mb-4 md:mb-6">Cole um copy existente e receba múltiplas versões melhoradas.</p>
 
         {!isPro && (
           <p className="text-xs text-muted-foreground mb-4">{used} de {limit} reescritas usadas este mês</p>
         )}
 
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid lg:grid-cols-2 gap-4 md:gap-8">
           {/* Input */}
-          <div className="bg-card rounded-lg shadow-premium p-6 space-y-4">
+          <div className="bg-card rounded-lg shadow-premium p-4 md:p-6 space-y-4">
             <div>
               <Label className="text-sm font-medium text-foreground">Copy original</Label>
               <Textarea
                 value={copyText}
                 onChange={(e) => setCopyText(e.target.value)}
                 placeholder="Cole o copy original aqui..."
-                className="mt-1.5 bg-background resize-none"
+                className="mt-1.5 bg-background resize-none text-base"
                 rows={5}
               />
             </div>
             <div>
               <Label className="text-sm font-medium text-foreground">Plataforma</Label>
               <Select value={platform} onValueChange={setPlatform}>
-                <SelectTrigger className="mt-1.5 h-11 bg-background">
+                <SelectTrigger className="mt-1.5 h-11 bg-background text-base">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -130,7 +130,7 @@ const Reescrever = () => {
               <Label className="text-sm font-medium text-foreground mb-2 block">Versões desejadas</Label>
               <div className="space-y-2">
                 {versionTypes.map((v) => (
-                  <div key={v.id} className="flex items-center gap-2">
+                  <div key={v.id} className="flex items-center gap-2 min-h-[44px]">
                     <Checkbox
                       id={v.id}
                       checked={selectedVersions.includes(v.id)}
@@ -150,16 +150,17 @@ const Reescrever = () => {
             <Button
               onClick={handleRewrite}
               disabled={loading || !copyText.trim() || selectedVersions.length === 0}
-              className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+              className="w-full h-11 min-h-[44px] bg-primary hover:bg-primary/90 text-primary-foreground font-semibold md:relative md:bottom-auto fixed bottom-4 left-4 right-4 md:left-auto md:right-auto z-40 md:z-auto md:w-full"
+              style={{ width: undefined }}
             >
               {loading ? "Reescrevendo..." : "Reescrever →"}
             </Button>
           </div>
 
           {/* Results */}
-          <div className="space-y-4">
+          <div className="space-y-4 pb-16 md:pb-0">
             {results ? results.map((version, i) => (
-              <div key={i} className="bg-card rounded-lg shadow-premium p-5">
+              <div key={i} className="bg-card rounded-lg shadow-premium p-3 md:p-5">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold text-foreground capitalize">{version.tipo}</span>
@@ -175,7 +176,7 @@ const Reescrever = () => {
                 <p className="text-sm text-muted-foreground mt-2">{version.texto}</p>
                 <p className="text-sm text-primary font-medium mt-2">CTA: {version.cta}</p>
                 <div className="flex gap-2 mt-3">
-                  <Button size="sm" variant="outline" onClick={() => handleCopy(`${version.titulo}\n${version.texto}\nCTA: ${version.cta}`)} className="text-foreground">
+                  <Button size="sm" variant="outline" onClick={() => handleCopy(`${version.titulo}\n${version.texto}\nCTA: ${version.cta}`)} className="text-foreground min-h-[44px]">
                     <Copy className="w-3.5 h-3.5 mr-1" />
                     Copiar
                   </Button>
@@ -183,7 +184,7 @@ const Reescrever = () => {
                     size="sm"
                     variant="ghost"
                     onClick={() => setShowDiff(showDiff === version.tipo ? null : version.tipo)}
-                    className="text-muted-foreground"
+                    className="text-muted-foreground min-h-[44px]"
                   >
                     {showDiff === version.tipo ? "Esconder diff" : "Ver o que mudou"}
                   </Button>

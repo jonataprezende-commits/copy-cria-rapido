@@ -91,9 +91,9 @@ const Dashboard = () => {
   return (
     <div className="flex min-h-screen bg-background">
       <DashboardSidebar />
-      <main className="flex-1 p-6 md:p-8 overflow-auto">
+      <main className="flex-1 p-4 md:p-8 overflow-auto">
         {!isPro && (
-          <div className="mb-6 flex items-center gap-3">
+          <div className="mb-4 md:mb-6 flex items-center gap-3">
             <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden max-w-xs">
               <div className="h-full bg-primary rounded-full transition-all duration-300" style={{ width: `${usagePercent}%` }} />
             </div>
@@ -103,9 +103,9 @@ const Dashboard = () => {
           </div>
         )}
 
-        <div className="grid lg:grid-cols-12 gap-8">
+        <div className="grid lg:grid-cols-12 gap-4 md:gap-8">
           <div className="lg:col-span-5">
-            <div className="bg-card rounded-lg shadow-premium p-6">
+            <div className="bg-card rounded-lg shadow-premium p-4 md:p-6">
               <h2 className="text-lg font-bold text-foreground mb-5 flex items-center gap-2">
                 <PenTool className="w-5 h-5 text-primary" />
                 Gerar Copy

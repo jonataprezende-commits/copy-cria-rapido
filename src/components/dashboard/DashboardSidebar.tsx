@@ -1,10 +1,12 @@
-import { Zap, PenTool, Clock, Heart, Download, Settings, LogOut, FileSearch, RefreshCw, GraduationCap, Layers } from "lucide-react";
+import { Zap, PenTool, Clock, Heart, Download, Settings, LogOut, FileSearch, RefreshCw, GraduationCap, Layers, Menu, X } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useState } from "react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const topItems = [
   { to: "/campanha", icon: Zap, label: "Campanha 50x", badge: "NOVO", badgeColor: "bg-primary text-primary-foreground" },
@@ -28,7 +30,7 @@ const bottomItems = [
   { to: "/configuracoes", icon: Settings, label: "Configurações" },
 ];
 
-export function DashboardSidebar() {
+function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { profile, signOut } = useAuth();
@@ -61,20 +63,25 @@ export function DashboardSidebar() {
     toast.success("Sessão encerrada.");
   };
 
+  const handleNav = (to: string) => {
+    navigate(to);
+    onNavigate?.();
+  };
+
   const renderNavItem = (item: any) => {
     const active = location.pathname === item.to;
     return (
       <a
         key={item.to}
         href={item.to}
-        onClick={(e) => { e.preventDefault(); navigate(item.to); }}
-        className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-150 ${
+        onClick={(e) => { e.preventDefault(); handleNav(item.to); }}
+        className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-150 min-h-[44px] ${
           active
             ? "bg-primary/10 text-primary"
             : "text-muted-foreground hover:bg-muted hover:text-foreground"
         }`}
       >
-        <item.icon className="w-[18px] h-[18px]" />
+        <item.icon className="w-[18px] h-[18px] shrink-0" />
         <span className="flex-1">{item.label}</span>
         {item.badge && (
           <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${item.badgeColor}`}>
@@ -86,9 +93,9 @@ export function DashboardSidebar() {
   };
 
   return (
-    <aside className="w-64 bg-card border-r border-border flex flex-col h-screen sticky top-0">
-      <div className="h-14 flex items-center px-5 border-b border-border">
-        <a href="/" className="flex items-center gap-2">
+    <div className="flex flex-col h-full">
+      <div className="h-14 flex items-center px-5 border-b border-border shrink-0">
+        <a href="/" onClick={(e) => { e.preventDefault(); handleNav("/"); }} className="flex items-center gap-2">
           <Zap className="w-5 h-5 text-primary" />
           <span className="font-bold text-foreground">CopyHunter</span>
         </a>
@@ -102,8 +109,7 @@ export function DashboardSidebar() {
         {historyItems.map(renderNavItem)}
       </nav>
 
-      <div className="px-3 pb-3">
-        {/* XP display */}
+      <div className="px-3 pb-3 shrink-0">
         {isPro && (
           <div className="flex items-center gap-2 px-3 py-2 mb-2">
             <span className="text-xs font-bold text-primary">{xp} XP</span>
@@ -143,12 +149,59 @@ export function DashboardSidebar() {
         {bottomItems.map(renderNavItem)}
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-150 w-full"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-150 w-full min-h-[44px]"
         >
           <LogOut className="w-[18px] h-[18px]" />
           Sair
         </button>
       </div>
+    </div>
+  );
+}
+
+export function MobileHeader() {
+  const [open, setOpen] = useState(false);
+  const { profile } = useAuth();
+
+  return (
+    <>
+      <header className="md:hidden fixed top-0 left-0 right-0 z-50 h-14 bg-card border-b border-border flex items-center justify-between px-4">
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetTrigger asChild>
+            <button className="p-2 -ml-2 min-h-[44px] min-w-[44px] flex items-center justify-center">
+              <Menu className="w-5 h-5 text-foreground" />
+            </button>
+          </SheetTrigger>
+          <SheetContent side="left" className="p-0 w-64">
+            <SidebarContent onNavigate={() => setOpen(false)} />
+          </SheetContent>
+        </Sheet>
+        <div className="flex items-center gap-2">
+          <Zap className="w-5 h-5 text-primary" />
+          <span className="font-bold text-foreground text-sm">CopyHunter</span>
+        </div>
+        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+          <span className="text-xs font-bold text-primary">
+            {profile?.name?.charAt(0)?.toUpperCase() || "U"}
+          </span>
+        </div>
+      </header>
+      {/* Spacer for fixed header */}
+      <div className="md:hidden h-14" />
+    </>
+  );
+}
+
+export function DashboardSidebar() {
+  const isMobile = useIsMobile();
+
+  if (isMobile) {
+    return <MobileHeader />;
+  }
+
+  return (
+    <aside className="w-64 bg-card border-r border-border flex flex-col h-screen sticky top-0 shrink-0 hidden md:flex">
+      <SidebarContent />
     </aside>
   );
 }

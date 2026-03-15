@@ -17,6 +17,7 @@ import Reescrever from "./pages/Reescrever.tsx";
 import Campanha from "./pages/Campanha.tsx";
 import Treinar from "./pages/Treinar.tsx";
 import Funil from "./pages/Funil.tsx";
+import RedefinirSenha from "./pages/RedefinirSenha.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/entrar" element={<Login />} />
+            <Route path="/redefinir-senha" element={<RedefinirSenha />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/historico" element={<ProtectedRoute><Historico /></ProtectedRoute>} />
             <Route path="/salvos" element={<ProtectedRoute><Salvos /></ProtectedRoute>} />

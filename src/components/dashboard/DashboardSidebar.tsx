@@ -115,12 +115,21 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       </nav>
 
       <div className="px-3 pb-3 shrink-0">
-        {isPro && (
-          <div className="flex items-center gap-2 px-3 py-2 mb-2">
+        <div className="px-3 py-2 mb-2">
+          <div className="flex items-center justify-between mb-1">
             <span className="text-xs font-bold text-primary">{xp} XP</span>
             <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-medium">{xpLevel}</span>
           </div>
-        )}
+          <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-primary rounded-full transition-all duration-500" 
+              style={{ width: `${Math.min((xp % 100), 100)}%` }} 
+            />
+          </div>
+          <p className="text-[9px] text-muted-foreground mt-1 text-right">
+            {100 - (xp % 100)} XP para o próximo nível
+          </p>
+        </div>
 
         <div className="bg-muted rounded-lg p-4 mb-3">
           <p className="text-xs font-medium text-muted-foreground mb-1">

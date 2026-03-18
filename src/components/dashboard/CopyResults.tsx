@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Copy, Check, Heart, RefreshCw } from "lucide-react";
+import { Copy, Check, Heart, RefreshCw, Image as ImageIcon } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -50,6 +50,13 @@ function CopyCard({ copy, index, platform, generationId }: { copy: CopyVariation
     setCopied(true);
     toast.success("Copiado para a área de transferência!");
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleGenerateImage = () => {
+    const prompt = encodeURIComponent(`Professional advertisement creative for: ${copy.titulo}. High quality, marketing style.`);
+    const url = `https://pollinations.ai/p/${prompt}?width=1080&height=1080&nologo=true`;
+    window.open(url, "_blank");
+    toast.success("Gerando imagem do criativo...");
   };
 
   const handleFavorite = async () => {
@@ -116,6 +123,13 @@ function CopyCard({ copy, index, platform, generationId }: { copy: CopyVariation
                 favorited ? "fill-destructive text-destructive" : "text-muted-foreground"
               }`}
             />
+          </button>
+          <button
+            onClick={handleGenerateImage}
+            className="p-1.5 rounded-md hover:bg-muted transition-colors duration-150"
+            title="Gerar Imagem do Criativo"
+          >
+            <ImageIcon className="w-4 h-4 text-muted-foreground" />
           </button>
           <button
             onClick={handleCopy}

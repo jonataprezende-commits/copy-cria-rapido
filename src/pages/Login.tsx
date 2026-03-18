@@ -40,14 +40,20 @@ const Login = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: window.location.origin + '/auth/callback',
+          redirectTo: window.location.origin + '/dashboard',
         },
       });
+      
       if (error) {
-        toast.error("Erro ao entrar com Google.");
+        if (error.message.includes("missing OAuth secret") || error.message.includes("Unsupported provider")) {
+          toast.error("Login com Google temporariamente indisponível. Use email e senha.");
+        } else {
+          toast.error(error.message || "Erro ao entrar com Google.");
+        }
       }
-    } catch {
-      toast.error("Erro ao entrar com Google.");
+    } catch (err: any) {
+      console.error("Google login error:", err);
+      toast.error("Login com Google temporariamente indisponível. Use email e senha.");
     } finally {
       setGoogleLoading(false);
     }

@@ -3,24 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
-const mockCopies = [
-  {
-    titulo: "Aprenda Tráfego Pago do Zero",
-    texto: "Mais de 8.400 alunos já faturam com anúncios. Começa hoje por R$1.",
-    cta: "Quero começar agora",
-  },
-  {
-    titulo: "Seu primeiro cliente em 7 dias",
-    texto: "Método validado com R$50 de investimento. Acesso imediato + suporte.",
-    cta: "Ver o método completo",
-  },
-  {
-    titulo: "Pare de perder dinheiro com ads",
-    texto: "Descubra o método que já gerou +R$2M em vendas para pequenos negócios.",
-    cta: "Conhecer o método",
-  },
-];
+import { toast } from "sonner";
 
 function TypewriterText({ text, delay = 0 }: { text: string; delay?: number }) {
   return (
@@ -45,17 +28,74 @@ function TypewriterText({ text, delay = 0 }: { text: string; delay?: number }) {
 
 export function HeroDemo() {
   const [productName, setProductName] = useState("");
+  const [demoResults, setDemoResults] = useState<string[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleGenerate = () => {
+  const gerarDemo = async () => {
     if (!productName.trim()) return;
+
     setIsLoading(true);
     setShowResults(false);
-    setTimeout(() => {
-      setIsLoading(false);
+
+    try {
+      const response = await fetch("https://text.pollinations.ai/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [
+            {
+              role: "system",
+              content:
+                "Você é um copywriter especialista em marketing digital. Gere exatamente 3 variações curtas e persuasivas de copy para anúncio. Retorne APENAS JSON válido sem markdown: {\"copies\": [\"copy1\", \"copy2\", \"copy3\"]}",
+            },
+            {
+              role: "user",
+              content: `Produto: ${productName}. Gere 3 copies de anúncio curtos (máximo 15 palavras cada) e persuasivos em português brasileiro. Foque em benefício e urgência.`,
+            },
+          ],
+          model: "openai",
+          seed: Math.floor(Math.random() * 1000),
+        }),
+      });
+
+      const text = await response.text();
+
+      try {
+        const clean = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+        const data = JSON.parse(clean);
+        const copies = data.copies || [];
+
+        if (copies.length > 0) {
+          setDemoResults(copies);
+          setShowResults(true);
+        } else {
+          throw new Error("Nenhum copy gerado");
+        }
+      } catch (parseError) {
+        console.error("Parse error:", parseError);
+        // Fallback com copies baseados no input
+        const fallbackCopies = [
+          `Descubra ${productName} — Resultados em dias`,
+          `${productName}: A solução que você estava esperando`,
+          `Experimente ${productName} e veja a diferença`,
+        ];
+        setDemoResults(fallbackCopies);
+        setShowResults(true);
+      }
+    } catch (error) {
+      console.error("Demo generation error:", error);
+      // Fallback com copies baseados no input
+      const fallbackCopies = [
+        `Descubra ${productName} — Resultados em dias`,
+        `${productName}: A solução que você estava esperando`,
+        `Experimente ${productName} e veja a diferença`,
+      ];
+      setDemoResults(fallbackCopies);
       setShowResults(true);
-    }, 1500);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -66,11 +106,11 @@ export function HeroDemo() {
             placeholder="Digite o nome do seu produto..."
             value={productName}
             onChange={(e) => setProductName(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
+            onKeyDown={(e) => e.key === "Enter" && gerarDemo()}
             className="flex-1 h-12 text-base bg-background border-input focus-visible:ring-primary"
           />
           <Button
-            onClick={handleGenerate}
+            onClick={gerarDemo}
             disabled={!productName.trim() || isLoading}
             className="h-12 px-6 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold transition-all duration-150"
           >
@@ -97,7 +137,7 @@ export function HeroDemo() {
             </motion.div>
           )}
 
-          {showResults && !isLoading && (
+          {showResults && !isLoading && demoResults.length > 0 && (
             <motion.div
               key="results"
               initial={{ opacity: 0, y: 10 }}
@@ -105,7 +145,7 @@ export function HeroDemo() {
               transition={{ duration: 0.3 }}
               className="mt-6 space-y-4"
             >
-              {mockCopies.map((copy, index) => (
+              {demoResults.map((copy, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 8 }}
@@ -113,20 +153,14 @@ export function HeroDemo() {
                   transition={{ delay: index * 0.2, duration: 0.3 }}
                   className="p-4 rounded-md bg-background border border-border"
                 >
-                  <p className="text-xs text-muted-foreground mb-1">Variação {index + 1}</p>
-                  <p className="font-semibold text-foreground">
-                    <TypewriterText text={copy.titulo} delay={index * 0.4} />
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    <TypewriterText text={copy.texto} delay={index * 0.4 + 0.5} />
-                  </p>
-                  <p className="text-xs text-primary font-medium mt-2">
-                    <TypewriterText text={`CTA: ${copy.cta}`} delay={index * 0.4 + 1} />
+                  <p className="text-xs text-muted-foreground mb-2">Variação {index + 1}</p>
+                  <p className="font-semibold text-foreground text-sm">
+                    <TypewriterText text={copy} delay={index * 0.4} />
                   </p>
                 </motion.div>
               ))}
               <p className="text-center text-sm text-muted-foreground mt-4">
-                Quer ver as outras 7 variações?{" "}
+                Quer ver mais variações e recursos avançados?{" "}
                 <a href="/entrar" className="text-primary font-medium hover:underline">
                   Crie sua conta grátis <ArrowRight className="inline w-3 h-3" />
                 </a>

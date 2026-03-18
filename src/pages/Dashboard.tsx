@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { GenerateForm } from "@/components/dashboard/GenerateForm";
 import { CopyResults } from "@/components/dashboard/CopyResults";
@@ -8,7 +8,7 @@ import { PenTool } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Navigate } from "react-router-dom";
 
 interface CopyVariation {
   id: number;
@@ -19,14 +19,42 @@ interface CopyVariation {
   por_que_funciona: string;
 }
 
-const Dashboard = () => {
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4 text-center">
+          <h2 className="text-2xl font-bold text-foreground mb-4">Algo deu errado.</h2>
+          <button 
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+          >
+            Recarregar
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+const DashboardContent = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<CopyVariation[] | null>(null);
   const [currentPlatform, setCurrentPlatform] = useState("meta");
   const [generationId, setGenerationId] = useState<string | null>(null);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [lastFormData, setLastFormData] = useState<any>(null);
-  const { profile, refreshProfile, checkSubscription } = useAuth();
+  const { profile, user, loading, refreshProfile, checkSubscription } = useAuth();
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
@@ -35,6 +63,19 @@ const Dashboard = () => {
       checkSubscription();
     }
   }, [searchParams]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <span className="ml-3 text-muted-foreground">Carregando...</span>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/entrar" replace />;
+  }
 
   const handleGenerate = async (data: {
     productName: string;
@@ -140,5 +181,11 @@ const Dashboard = () => {
     </div>
   );
 };
+
+const Dashboard = () => (
+  <ErrorBoundary>
+    <DashboardContent />
+  </ErrorBoundary>
+);
 
 export default Dashboard;

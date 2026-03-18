@@ -1,6 +1,12 @@
-// Here goes the updated content of the file with the closing </h1> tag added
+import React from 'react';
 
-// Assuming the structure of the file, the <h1> tag should close here
-// ... your other code ...
-</h1>
-<p>Your content here...</p>
+const Funil = () => {
+  return (
+    <div>
+      <h1>Funil completo em 1 clique</h1> 
+      <p>Your content here...</p> 
+    </div>
+  );
+};
+
+export default Funil;

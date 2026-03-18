@@ -8,9 +8,10 @@ import { toast } from "sonner";
 
 const Exportar = () => {
   const { profile, user } = useAuth();
-  const isPro = profile?.plan === "pro";
+  const isPro = profile?.plan === "pro" || profile?.plan === "agency";
   const [generations, setGenerations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     if (!user || !isPro) {
@@ -49,6 +50,69 @@ const Exportar = () => {
       supabase.from("usage_logs").insert({ user_id: user.id, action: "export", platform: "txt" });
     }
     toast.success("Exportação concluída!");
+  };
+
+  const exportAsDocx = async () => {
+    setExporting(true);
+    try {
+      const { Document, Packer, Paragraph } = await import("docx");
+
+      const sections = generations.map((g) => {
+        const copies = Array.isArray(g.copies) ? g.copies : [];
+        return [
+          new Paragraph({
+            text: g.product_name,
+            heading: "Heading1",
+            spacing: { after: 200 },
+          }),
+          new Paragraph({
+            text: `Plataforma: ${g.platform} | Data: ${new Date(g.created_at).toLocaleDateString("pt-BR")}`,
+            spacing: { after: 400 },
+          }),
+          ...copies.map((c: any) => [
+            new Paragraph({
+              text: c.titulo,
+              bold: true,
+              spacing: { after: 100 },
+            }),
+            new Paragraph({
+              text: c.texto,
+              spacing: { after: 100 },
+            }),
+            new Paragraph({
+              text: `CTA: ${c.cta}`,
+              italics: true,
+              spacing: { after: 300 },
+            }),
+          ]).flat(),
+        ];
+      }).flat();
+
+      const doc = new Document({
+        sections: [
+          {
+            children: sections,
+          },
+        ],
+      });
+
+      const blob = await Packer.toBlob(doc);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "copyhunter-export.docx";
+      a.click();
+
+      if (user) {
+        supabase.from("usage_logs").insert({ user_id: user.id, action: "export", platform: "docx" });
+      }
+      toast.success("Exportação em DOCX concluída!");
+    } catch (e) {
+      console.error("DOCX export error:", e);
+      toast.error("Erro ao exportar em DOCX.");
+    } finally {
+      setExporting(false);
+    }
   };
 
   const exportAsCsv = () => {
@@ -122,6 +186,10 @@ const Exportar = () => {
               <Button onClick={exportAsTxt} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold">
                 <Download className="w-4 h-4 mr-2" />
                 Exportar como TXT
+              </Button>
+              <Button onClick={exportAsDocx} disabled={exporting} className="w-full bg-secondary hover:bg-secondary/80 text-secondary-foreground font-semibold">
+                <Download className="w-4 h-4 mr-2" />
+                {exporting ? "Exportando..." : "Exportar como DOCX"}
               </Button>
               <Button onClick={exportAsCsv} variant="outline" className="w-full text-foreground">
                 <Download className="w-4 h-4 mr-2" />

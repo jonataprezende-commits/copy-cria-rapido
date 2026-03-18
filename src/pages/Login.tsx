@@ -1,12 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
@@ -28,11 +27,16 @@ const Login = () => {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotSent, setForgotSent] = useState(false);
   const navigate = useNavigate();
-  const { signIn, signUp, user } = useAuth();
+  const location = useLocation();
+  const { signIn, signUp, user, loading: authLoading } = useAuth();
 
-  if (user) {
-    navigate("/dashboard", { replace: true });
-  }
+  // Handle redirect if user is already logged in
+  useEffect(() => {
+    if (!authLoading && user) {
+      const from = (location.state as any)?.from?.pathname || "/dashboard";
+      navigate(from, { replace: true });
+    }
+  }, [user, authLoading, navigate, location]);
 
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
@@ -40,11 +44,12 @@ const Login = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: window.location.origin + '/dashboard',
+          redirectTo: window.location.origin + '/auth/callback',
         },
       });
       
       if (error) {
+        console.error("Google login error:", error);
         if (error.message.includes("missing OAuth secret") || error.message.includes("Unsupported provider")) {
           toast.error("Login com Google temporariamente indisponível. Use email e senha.");
         } else {
@@ -52,7 +57,7 @@ const Login = () => {
         }
       }
     } catch (err: any) {
-      console.error("Google login error:", err);
+      console.error("Google login unexpected error:", err);
       toast.error("Login com Google temporariamente indisponível. Use email e senha.");
     } finally {
       setGoogleLoading(false);
@@ -67,21 +72,26 @@ const Login = () => {
       if (isLogin) {
         const { error } = await signIn(email, password);
         if (error) {
+          console.error("Sign in error:", error);
           toast.error(error.message === "Invalid login credentials"
             ? "E-mail ou senha incorretos"
             : error.message);
           return;
         }
         toast.success("Login realizado com sucesso!");
-        navigate("/dashboard");
+        // Navigation is handled by the useEffect above
       } else {
         const { error } = await signUp(email, password, name);
         if (error) {
+          console.error("Sign up error:", error);
           toast.error(error.message);
           return;
         }
         toast.success("Conta criada com sucesso! Verifique seu e-mail.");
       }
+    } catch (err: any) {
+      console.error("Submit unexpected error:", err);
+      toast.error("Ocorreu um erro inesperado. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -98,11 +108,20 @@ const Login = () => {
       if (error) throw error;
       setForgotSent(true);
     } catch (err: any) {
+      console.error("Forgot password error:", err);
       toast.error(err.message || "Erro ao enviar e-mail.");
     } finally {
       setForgotLoading(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">

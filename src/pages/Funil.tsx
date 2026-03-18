@@ -34,9 +34,9 @@ const Funil = () => {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<any>(null);
   const { profile } = useAuth();
-  const isAgency = profile?.plan === "agency";
+  const isPro = profile?.plan === "pro";
 
-  if (!isAgency) {
+  if (!isPro) {
     return (
       <div className="flex min-h-screen bg-background">
         <DashboardSidebar />
@@ -48,9 +48,7 @@ const Funil = () => {
             </div>
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/60 rounded-lg">
               <Lock className="w-10 h-10 text-muted-foreground/40 mb-4" />
-              <h3 className="font-bold text-foreground mb-2">Disponível no Plano Agência</h3>
-              <p className="text-sm text-muted-foreground mb-4">R$97/mês</p>
-            </div>
+              <h3 className="font-bold text-foreground mb-2">Disponível no Plano Pro</h3>          </div>
           </div>
         </main>
       </div>
@@ -89,7 +87,6 @@ const Funil = () => {
         <h1 className="text-xl md:text-2xl font-bold text-foreground mb-1 flex items-center gap-2">
           <Layers className="w-5 md:w-6 h-5 md:h-6 text-accent" />
           Funil completo em 1 clique
-        </h1>
         <p className="text-sm text-muted-foreground mb-4 md:mb-6">Do anúncio à venda. A IA monta todo o funil do seu produto.</p>
 
         {!results ? (

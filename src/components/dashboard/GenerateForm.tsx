@@ -46,7 +46,7 @@ interface GenerateFormProps {
 
 export function GenerateForm({ onGenerate, isLoading }: GenerateFormProps) {
   const { profile } = useAuth();
-  const isPro = profile?.plan === "pro" || profile?.plan === "agency";
+  const isPro = profile?.plan === "pro";
 
   const [businessType, setBusinessType] = useState<BusinessType>(
     ((profile as any)?.preferred_template as BusinessType) || "infoproduto"

@@ -24,7 +24,7 @@ interface MentalTriggersProps {
 
 export function MentalTriggers({ selected, onChange }: MentalTriggersProps) {
   const { profile } = useAuth();
-  const isPro = profile?.plan === "pro" || profile?.plan === "agency";
+  const isPro = profile?.plan === "pro";
 
   const handleToggle = (id: string) => {
     if (selected.includes(id)) {

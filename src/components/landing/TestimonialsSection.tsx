@@ -4,7 +4,7 @@ import { Star } from "lucide-react";
 const testimonials = [
   {
     name: "Fernanda Lima",
-    role: "Agência Digital SP",
+    role: "Empreendedor Digital",
     text: "Parei de contratar redator para anúncios simples. O CopyHunter paga o custo em 1 dia de uso.",
     stars: 5,
   },

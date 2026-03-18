@@ -37,23 +37,7 @@ const plans = [
       { text: "Coach de copy + XP", included: true },
     ],
   },
-  {
-    name: "Agência",
-    price: "R$97",
-    period: "/mês",
-    description: "Para profissionais",
-    cta: "Assinar Agência",
-    highlighted: false,
-    badge: "Para profissionais",
-    features: [
-      { text: "Tudo do Pro", included: true },
-      { text: "Funil completo em 1 clique", included: true },
-      { text: "Relatório PDF mensal", included: true },
-      { text: "Prioridade na fila da IA", included: true },
-      { text: "Landing page + e-mails + script", included: true },
-      { text: "Suporte prioritário", included: true },
-    ],
-  },
+
 ];
 
 export function PricingSection() {
@@ -68,7 +52,7 @@ export function PricingSection() {
         <p className="text-muted-foreground text-lg mb-12">
           Comece grátis. Faça upgrade quando precisar.
         </p>
-        <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
           {plans.map((plan, i) => (
             <motion.div
               key={plan.name}

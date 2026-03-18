@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import { lovable } from "@/integrations/lovable/index";
+
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
@@ -37,8 +37,11 @@ const Login = () => {
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
     try {
-      const { error } = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin + '/auth/callback',
+        },
       });
       if (error) {
         toast.error("Erro ao entrar com Google.");

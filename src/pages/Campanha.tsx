@@ -37,7 +37,7 @@ const Campanha = () => {
   const [progress, setProgress] = useState({ current: 0, label: "" });
   const [results, setResults] = useState<CampaignResults | null>(null);
   const { profile } = useAuth();
-  const isPro = profile?.plan === "pro" || profile?.plan === "agency";
+  const isPro = profile?.plan === "pro";
 
   const handleGenerate = async () => {
     if (!productName.trim()) return;
@@ -102,7 +102,7 @@ const Campanha = () => {
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/60 rounded-lg">
               <Lock className="w-10 h-10 text-muted-foreground/40 mb-4" />
               <h3 className="font-bold text-foreground mb-2">Desbloqueie com o Plano Pro</h3>
-              <p className="text-sm text-muted-foreground mb-4">R$29/mês</p>
+
             </div>
           </div>
         </main>

@@ -49,12 +49,8 @@ serve(async (req) => {
 
     if (hasActiveSub) {
       // Check which plan they have based on price amount
-      let plan = "pro";
+      const plan = "pro";
       const subscription = subscriptions.data[0];
-      const priceAmount = subscription.items.data[0]?.price?.unit_amount;
-      if (priceAmount && priceAmount >= 9700) {
-        plan = "agency";
-      }
 
       await supabaseClient
         .from("profiles")

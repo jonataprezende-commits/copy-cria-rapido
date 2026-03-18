@@ -47,7 +47,7 @@ const Analisar = () => {
   const [copied, setCopied] = useState(false);
   const { profile, user } = useAuth();
   const navigate = useNavigate();
-  const isPro = profile?.plan === "pro" || profile?.plan === "agency";
+  const isPro = profile?.plan === "pro";
   const used = (profile as any)?.analyses_used ?? 0;
   const limit = (profile as any)?.analyses_limit ?? 2;
 

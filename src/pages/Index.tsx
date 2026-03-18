@@ -283,6 +283,13 @@ const Index = () => {
       <TestimonialsSection />
       <PricingSection />
       <Footer />
+      <script
+        src="https://pollinations.ai/embed/chat.js"
+        data-bot-name="copyhunter-bot"
+        data-bot-avatar="https://copyhunter.app/logo.png" // Placeholder, replace with actual bot avatar path
+        data-bot-color="#7C3AED"
+        data-bot-welcome-message="Olá! Sou seu assistente CopyHunter. Como posso ajudar a criar copies incríveis hoje?"
+      ></script>
     </div>
   );
 };

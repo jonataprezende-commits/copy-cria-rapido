@@ -33,11 +33,7 @@ serve(async (req) => {
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
     // Get plan type from request body (default to pro)
-    let planType = "pro";
-    try {
-      const body = await req.json();
-      if (body?.plan === "agency") planType = "agency";
-    } catch { /* no body, default to pro */ }
+    const planType = "pro";
 
     // Find or create customer
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
@@ -50,8 +46,8 @@ serve(async (req) => {
     }
 
     // Find or create product+price
-    const productName = planType === "agency" ? "CopyHunter Agência" : "CopyHunter Pro";
-    const priceAmount = planType === "agency" ? 9700 : 2900;
+    const productName = "CopyHunter Pro";
+    const priceAmount = 2900;
 
     let priceId: string;
     const products = await stripe.products.search({ query: `name:"${productName}"` });

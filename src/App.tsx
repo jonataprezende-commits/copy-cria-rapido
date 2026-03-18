@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index.tsx";
 import Login from "./pages/Login.tsx";
+import AuthCallback from "./pages/AuthCallback.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import Historico from "./pages/Historico.tsx";
 import Salvos from "./pages/Salvos.tsx";
@@ -24,6 +25,7 @@ import Roteiro from "./pages/Roteiro.tsx";
 import Inspiracoes from "./pages/Inspiracoes.tsx";
 import RedefinirSenha from "./pages/RedefinirSenha.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import CodigoDeBarras from "./pages/CodigoDeBarras.tsx";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +39,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/entrar" element={<Login />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/redefinir-senha" element={<RedefinirSenha />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/historico" element={<ProtectedRoute><Historico /></ProtectedRoute>} />
@@ -53,6 +56,7 @@ const App = () => (
             <Route path="/melhorar" element={<ProtectedRoute><Melhorar /></ProtectedRoute>} />
             <Route path="/roteiro" element={<ProtectedRoute><Roteiro /></ProtectedRoute>} />
             <Route path="/inspiracoes" element={<ProtectedRoute><Inspiracoes /></ProtectedRoute>} />
+            <Route path="/codigo-de-barras" element={<ProtectedRoute><CodigoDeBarras /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

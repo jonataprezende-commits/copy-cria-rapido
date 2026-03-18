@@ -1,4 +1,4 @@
-import { Zap, PenTool, Clock, Heart, Download, Settings, LogOut, FileSearch, RefreshCw, GraduationCap, Layers, Menu, X, Factory, Sparkles, ScrollText, Lightbulb } from "lucide-react";
+import { Zap, PenTool, Clock, Heart, Download, Settings, LogOut, FileSearch, RefreshCw, GraduationCap, Layers, Menu, X, Factory, Sparkles, ScrollText, Lightbulb, Barcode } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -22,7 +22,8 @@ const mainItems = [
   { to: "/analisar", icon: FileSearch, label: "Analisar Copy" },
   { to: "/reescrever", icon: RefreshCw, label: "Reescrever" },
   { to: "/treinar", icon: GraduationCap, label: "Treinar Copy" },
-  { to: "/funil", icon: Layers, label: "Funil Completo", badge: "AGÊNCIA", badgeColor: "bg-accent text-accent-foreground" },
+  { to: "/codigo-de-barras", icon: Barcode, label: "Código de Barras" },
+
 ];
 
 const historyItems = [
@@ -41,8 +42,8 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { profile, signOut } = useAuth();
   const [upgradeLoading, setUpgradeLoading] = useState(false);
 
-  const isPro = profile?.plan === "pro" || profile?.plan === "agency";
-  const isAgency = profile?.plan === "agency";
+  const isPro = profile?.plan === "pro";
+
   const used = profile?.generations_used ?? 0;
   const limit = profile?.generations_limit ?? 5;
   const usagePercent = isPro ? 0 : Math.min((used / limit) * 100, 100);
@@ -133,7 +134,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
         <div className="bg-muted rounded-lg p-4 mb-3">
           <p className="text-xs font-medium text-muted-foreground mb-1">
-            {isAgency ? "Plano Agência 🚀" : isPro ? "Plano Pro ✨" : "Plano Grátis"}
+            {isPro ? "Plano Pro ✨" : "Plano Grátis"}
           </p>
           {!isPro && (
             <>

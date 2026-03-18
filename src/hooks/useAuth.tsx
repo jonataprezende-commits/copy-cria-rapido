@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .single();
     if (!error && data) {
       setProfile(data as any);
-      setIsSubscribed(data.plan === "pro" || data.plan === "agency");
+      setIsSubscribed(data.plan === "pro");
     }
   };
 

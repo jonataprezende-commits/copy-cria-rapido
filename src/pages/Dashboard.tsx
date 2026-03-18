@@ -46,7 +46,7 @@ const Dashboard = () => {
     businessType?: string;
     triggers?: string[];
   }) => {
-    const isPro = profile?.plan === "pro" || profile?.plan === "agency";
+    const isPro = profile?.plan === "pro";
     if (profile && !isPro && profile.generations_used >= profile.generations_limit) {
       setShowUpgrade(true);
       return;
@@ -83,7 +83,7 @@ const Dashboard = () => {
     }
   };
 
-  const isPro = profile?.plan === "pro" || profile?.plan === "agency";
+  const isPro = profile?.plan === "pro";
   const used = profile?.generations_used ?? 0;
   const limit = profile?.generations_limit ?? 5;
   const usagePercent = isPro ? 0 : Math.min((used / limit) * 100, 100);

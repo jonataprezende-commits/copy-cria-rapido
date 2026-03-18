@@ -44,8 +44,14 @@ Retorne APENAS JSON sem markdown:
 
   const raw = await callAI(prompt)
   const clean = raw.replace(/\`\`\`json\n?/g, "").replace(/\`\`\`\n?/g, "").trim()
-  const parsed = JSON.parse(clean)
-  return parsed.copies.map((c: any) => ({ ...c, platform }))
+  try {
+    const parsed = JSON.parse(clean);
+    return parsed.copies.map((c: any) => ({ ...c, platform }));
+  } catch (parseError) {
+    console.error(`[GENERATE-CAMPAIGN] JSON Parse Error for ${platform}:`, parseError);
+    console.error(`[GENERATE-CAMPAIGN] Raw AI response for ${platform}:`, raw);
+    throw new Error(`Erro ao processar resposta da IA para ${platform}. Resposta bruta: ${raw.substring(0, 200)}...`);
+  }
 }
 
 serve(async (req) => {

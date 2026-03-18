@@ -17,6 +17,11 @@ import Reescrever from "./pages/Reescrever.tsx";
 import Campanha from "./pages/Campanha.tsx";
 import Treinar from "./pages/Treinar.tsx";
 import Funil from "./pages/Funil.tsx";
+import Fabrica from "./pages/Fabrica.tsx";
+import HooksVirais from "./pages/HooksVirais.tsx";
+import Melhorar from "./pages/Melhorar.tsx";
+import Roteiro from "./pages/Roteiro.tsx";
+import Inspiracoes from "./pages/Inspiracoes.tsx";
 import RedefinirSenha from "./pages/RedefinirSenha.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -43,6 +48,11 @@ const App = () => (
             <Route path="/campanha" element={<ProtectedRoute><Campanha /></ProtectedRoute>} />
             <Route path="/treinar" element={<ProtectedRoute><Treinar /></ProtectedRoute>} />
             <Route path="/funil" element={<ProtectedRoute><Funil /></ProtectedRoute>} />
+            <Route path="/fabrica" element={<ProtectedRoute><Fabrica /></ProtectedRoute>} />
+            <Route path="/hooks-virais" element={<ProtectedRoute><HooksVirais /></ProtectedRoute>} />
+            <Route path="/melhorar" element={<ProtectedRoute><Melhorar /></ProtectedRoute>} />
+            <Route path="/roteiro" element={<ProtectedRoute><Roteiro /></ProtectedRoute>} />
+            <Route path="/inspiracoes" element={<ProtectedRoute><Inspiracoes /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

@@ -108,6 +108,9 @@ export type Database = {
           target_audience: string | null
           tone: string | null
           user_id: string
+          type: string | null
+          input: Json | null
+          output: Json | null
         }
         Insert: {
           copies?: Json
@@ -121,6 +124,9 @@ export type Database = {
           target_audience?: string | null
           tone?: string | null
           user_id: string
+          type?: string | null
+          input?: Json | null
+          output?: Json | null
         }
         Update: {
           copies?: Json
@@ -134,6 +140,9 @@ export type Database = {
           target_audience?: string | null
           tone?: string | null
           user_id?: string
+          type?: string | null
+          input?: Json | null
+          output?: Json | null
         }
         Relationships: []
       }

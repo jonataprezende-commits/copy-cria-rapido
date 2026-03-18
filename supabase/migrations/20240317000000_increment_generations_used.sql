@@ -1,0 +1,1 @@
+CREATE OR REPLACE FUNCTION public.increment_generations_used(user_uuid uuid) RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$ BEGIN UPDATE public.profiles SET generations_used = generations_used + 1, xp = xp + 10 WHERE id = user_uuid; END; $$;

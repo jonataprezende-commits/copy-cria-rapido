@@ -67,7 +67,7 @@ async function callAI(prompt: string, systemPrompt?: string, tools?: any): Promi
 }
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders }));
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   }
 
   try {

@@ -1,4 +1,4 @@
-import { Zap, PenTool, Clock, Heart, Download, Settings, LogOut, FileSearch, RefreshCw, GraduationCap, Layers, Menu, X } from "lucide-react";
+import { Zap, PenTool, Clock, Heart, Download, Settings, LogOut, FileSearch, RefreshCw, GraduationCap, Layers, Menu, X, Factory, Sparkles, ScrollText, Lightbulb } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -13,6 +13,11 @@ const topItems = [
 ];
 
 const mainItems = [
+  { to: "/fabrica", icon: Factory, label: "Fábrica de Conteúdo" },
+  { to: "/hooks-virais", icon: Sparkles, label: "Hooks Virais" },
+  { to: "/melhorar", icon: Lightbulb, label: "Melhorar Copy" },
+  { to: "/roteiro", icon: ScrollText, label: "Roteiro de Vídeo" },
+  { to: "/inspiracoes", icon: Lightbulb, label: "Inspirações de Anúncios" },
   { to: "/dashboard", icon: PenTool, label: "Gerar Copy" },
   { to: "/analisar", icon: FileSearch, label: "Analisar Copy" },
   { to: "/reescrever", icon: RefreshCw, label: "Reescrever" },

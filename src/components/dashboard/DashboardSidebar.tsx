@@ -42,7 +42,8 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { profile, signOut } = useAuth();
   const [upgradeLoading, setUpgradeLoading] = useState(false);
 
-  const isPro = profile?.plan === "pro";
+  const isPro = profile?.plan === "pro" || profile?.plan === "agency";
+  const isAgency = profile?.plan === "agency";
 
   const used = profile?.generations_used ?? 0;
   const limit = profile?.generations_limit ?? 5;

@@ -72,7 +72,6 @@ const Exportar = () => {
           ...copies.map((c: any) => [
             new Paragraph({
               text: c.titulo,
-              bold: true,
               spacing: { after: 100 },
             }),
             new Paragraph({
@@ -81,7 +80,6 @@ const Exportar = () => {
             }),
             new Paragraph({
               text: `CTA: ${c.cta}`,
-              italics: true,
               spacing: { after: 300 },
             }),
           ]).flat(),
